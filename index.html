@@ -1,0 +1,2100 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>TLCM POS PRO — Cloud Mobile Store Management</title>
+<meta name="theme-color" content="#174A78">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="TLCM POS PRO">
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
+<style>
+:root{
+  --accent:#174A78;
+  --accent-rgb:23,74,120;
+  --ink:#0f172a;
+  --muted:#5b6b82;
+  --bg:#e9f0fa;
+  --card:rgba(255,255,255,.64);
+  --card-strong:rgba(255,255,255,.78);
+  --glass-border:rgba(255,255,255,.72);
+  --line:rgba(15,23,42,.08);
+  --good:#109365;
+  --danger:#dc3e49;
+  --gold:#f5b942;
+  --radius:22px;
+  --spring:cubic-bezier(.22,1,.36,1);
+}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html{scroll-behavior:smooth}
+body{
+  margin:0;
+  min-height:100vh;
+  background:
+    radial-gradient(circle at 12% 14%, rgba(116,185,255,.42), transparent 38%),
+    radial-gradient(circle at 86% 18%, rgba(168,145,255,.32), transparent 40%),
+    radial-gradient(circle at 74% 84%, rgba(98,217,196,.28), transparent 42%),
+    radial-gradient(circle at 18% 82%, rgba(255,198,145,.26), transparent 40%),
+    linear-gradient(135deg,#eef4fc 0%,#e5eefb 50%,#edf2fb 100%);
+  background-attachment:fixed;
+  font-family:-apple-system,BlinkMacSystemFont,"SF Pro Display","SF Pro Text",Inter,system-ui,Segoe UI,Roboto,Arial,sans-serif;
+  color:var(--ink);
+  overflow-x:hidden;
+}
+
+/* Ambient drifting iOS orbs */
+.ios-bg-orbs{
+  position:fixed;inset:0;pointer-events:none;z-index:0;overflow:hidden;
+}
+.ios-orb{
+  position:absolute;border-radius:50%;filter:blur(70px);opacity:.48;will-change:transform;
+}
+.ios-orb.o1{
+  width:420px;height:420px;top:-110px;left:18%;
+  background:radial-gradient(circle,rgba(59,130,246,.52),rgba(59,130,246,0));
+  animation:orbFloat1 18s ease-in-out infinite alternate;
+}
+.ios-orb.o2{
+  width:380px;height:380px;right:-80px;top:24%;
+  background:radial-gradient(circle,rgba(139,92,246,.42),rgba(139,92,246,0));
+  animation:orbFloat2 22s ease-in-out infinite alternate;
+}
+.ios-orb.o3{
+  width:360px;height:360px;bottom:-90px;left:36%;
+  background:radial-gradient(circle,rgba(20,184,166,.36),rgba(20,184,166,0));
+  animation:orbFloat3 20s ease-in-out infinite alternate;
+}
+@keyframes orbFloat1{0%{transform:translate3d(0,0,0) scale(1)}100%{transform:translate3d(42px,28px,0) scale(1.08)}}
+@keyframes orbFloat2{0%{transform:translate3d(0,0,0) scale(1)}100%{transform:translate3d(-36px,38px,0) scale(1.06)}}
+@keyframes orbFloat3{0%{transform:translate3d(0,0,0) scale(1)}100%{transform:translate3d(30px,-32px,0) scale(1.07)}}
+
+@keyframes sectionIn{
+  from{opacity:0;transform:translateY(10px) scale(.992)}
+  to{opacity:1;transform:translateY(0) scale(1)}
+}
+@keyframes modalPop{
+  from{opacity:0;transform:translateY(14px) scale(.96)}
+  to{opacity:1;transform:translateY(0) scale(1)}
+}
+@keyframes toastIn{
+  from{opacity:0;transform:translateY(14px) scale(.95)}
+  to{opacity:1;transform:translateY(0) scale(1)}
+}
+
+button,input,select,textarea{font:inherit}
+button{
+  cursor:pointer;
+  border:1px solid rgba(255,255,255,.28);
+  border-radius:13px;
+  padding:10px 15px;
+  background:linear-gradient(135deg,color-mix(in srgb,var(--accent) 88%,#3b82f6),var(--accent));
+  color:#fff;
+  font-weight:650;
+  letter-spacing:-.1px;
+  box-shadow:0 6px 18px color-mix(in srgb,var(--accent) 28%,transparent), inset 0 1px 0 rgba(255,255,255,.35);
+  transition:transform .22s var(--spring), box-shadow .22s var(--spring), filter .2s ease, background .2s ease;
+}
+button:hover{
+  filter:brightness(1.05);
+  transform:translateY(-1.5px);
+  box-shadow:0 10px 24px color-mix(in srgb,var(--accent) 34%,transparent), inset 0 1px 0 rgba(255,255,255,.45);
+}
+button:active{transform:scale(.975)}
+button:disabled{opacity:.48;cursor:not-allowed;transform:none;box-shadow:none}
+button.secondary{
+  background:rgba(255,255,255,.68);
+  backdrop-filter:blur(12px);
+  -webkit-backdrop-filter:blur(12px);
+  color:var(--accent);
+  border:1px solid rgba(255,255,255,.85);
+  box-shadow:0 4px 14px rgba(15,23,42,.06), inset 0 1px 0 rgba(255,255,255,.9);
+}
+button.secondary:hover{background:rgba(255,255,255,.88)}
+button.ghost{
+  background:rgba(255,255,255,.48);
+  backdrop-filter:blur(10px);
+  -webkit-backdrop-filter:blur(10px);
+  color:#334155;
+  border:1px solid rgba(255,255,255,.72);
+  box-shadow:0 2px 8px rgba(15,23,42,.04);
+}
+button.ghost:hover{background:rgba(255,255,255,.78)}
+button.danger{
+  background:rgba(255,235,238,.78);
+  backdrop-filter:blur(10px);
+  color:#c62839;
+  border:1px solid rgba(220,62,73,.22);
+  box-shadow:0 4px 12px rgba(220,62,73,.10);
+}
+button.danger:hover{background:rgba(255,222,226,.95)}
+button.small{padding:7px 11px;font-size:12px;border-radius:10px}
+button.dark{background:rgba(20,35,59,.88);backdrop-filter:blur(12px)}
+
+input,select,textarea{
+  width:100%;
+  padding:10px 13px;
+  border:1px solid rgba(255,255,255,.82);
+  border-radius:13px;
+  background:rgba(255,255,255,.68);
+  backdrop-filter:blur(12px);
+  -webkit-backdrop-filter:blur(12px);
+  outline:none;
+  color:var(--ink);
+  box-shadow:inset 0 1px 2px rgba(15,23,42,.05), 0 1px 0 rgba(255,255,255,.8);
+  transition:border-color .2s ease, box-shadow .2s ease, background .2s ease;
+}
+input:focus,select:focus,textarea:focus{
+  background:rgba(255,255,255,.92);
+  border-color:color-mix(in srgb,var(--accent) 70%,#60a5fa);
+  box-shadow:0 0 0 4px color-mix(in srgb,var(--accent) 16%,transparent), inset 0 1px 1px rgba(255,255,255,.9);
+}
+label{font-size:12px;font-weight:700;color:#475569;display:block;margin:0 0 6px}
+
+.app{display:flex;min-height:100vh;position:relative;z-index:1}
+
+/* Frosted Dark Glass Sidebar */
+.sidebar{
+  width:252px;
+  background:rgba(15,27,48,.76);
+  backdrop-filter:blur(28px) saturate(180%);
+  -webkit-backdrop-filter:blur(28px) saturate(180%);
+  border-right:1px solid rgba(255,255,255,.14);
+  box-shadow:8px 0 32px rgba(15,23,42,.12);
+  color:#e2eaf6;
+  position:fixed;inset:0 auto 0 0;
+  padding:20px 14px;
+  display:flex;flex-direction:column;
+  z-index:120;overflow-y:auto;
+}
+.brand{display:flex;gap:12px;align-items:center;padding:8px 10px 22px}
+.logo{
+  width:40px;height:40px;border-radius:14px;
+  background:linear-gradient(135deg,#60a5fa,var(--accent));
+  display:grid;place-items:center;color:white;font-weight:900;
+  box-shadow:0 10px 24px color-mix(in srgb,var(--accent) 45%,transparent), inset 0 1px 0 rgba(255,255,255,.5);
+  flex:0 0 auto;
+}
+.brand h2{font-size:15px;margin:0;color:#fff;letter-spacing:.2px;font-weight:800}
+.brand small{display:block;color:#9bb0cf;font-size:10px;margin-top:2px;letter-spacing:.8px}
+.navlabel{font-size:10px;text-transform:uppercase;letter-spacing:1.4px;color:#8ba1c2;padding:10px 12px}
+.nav{display:grid;gap:4px}
+.nav button{
+  background:transparent;
+  border:1px solid transparent;
+  box-shadow:none;
+  color:#c5d3e8;
+  text-align:left;
+  padding:11px 13px;
+  border-radius:13px;
+  font-weight:600;
+  font-size:13px;
+  display:flex;align-items:center;gap:11px;
+  transition:background .2s ease, color .2s ease, transform .2s var(--spring), border-color .2s ease;
+}
+.nav button:hover{
+  background:rgba(255,255,255,.11);
+  color:#fff;
+  transform:translateX(3px);
+  filter:none;
+  box-shadow:none;
+}
+.nav button.active{
+  background:rgba(255,255,255,.18);
+  border-color:rgba(255,255,255,.22);
+  color:#fff;
+  box-shadow:0 6px 18px rgba(0,0,0,.16), inset 0 1px 0 rgba(255,255,255,.28);
+}
+.navico{width:20px;text-align:center;font-size:16px}
+.sidebottom{
+  margin-top:auto;
+  background:rgba(255,255,255,.09);
+  border:1px solid rgba(255,255,255,.15);
+  border-radius:16px;
+  padding:13px;
+  backdrop-filter:blur(12px);
+}
+.sidebottom strong{font-size:12px;color:#fff}
+.sidebottom p{font-size:11px;color:#b8c8df;margin:5px 0 0;line-height:1.5}
+
+.main{margin-left:252px;width:calc(100% - 252px);padding:22px 28px 44px;position:relative;z-index:1}
+
+/* Floating iOS Glass Topbar */
+.topbar{
+  display:flex;justify-content:space-between;align-items:center;gap:12px;
+  margin-bottom:22px;
+  padding:14px 18px;
+  border-radius:20px;
+  background:rgba(255,255,255,.58);
+  backdrop-filter:blur(22px) saturate(180%);
+  -webkit-backdrop-filter:blur(22px) saturate(180%);
+  border:1px solid var(--glass-border);
+  box-shadow:0 8px 30px rgba(15,23,42,.06), inset 0 1px 0 rgba(255,255,255,.9);
+}
+.topbar-left{display:flex;align-items:center;gap:12px;min-width:0}
+.topbar h1{margin:0;font-size:22px;letter-spacing:-.5px;font-weight:800}
+.topbar p{margin:3px 0 0;color:var(--muted);font-size:12.5px}
+.topright{display:flex;gap:10px;align-items:center}
+.avatar{
+  width:38px;height:38px;border-radius:50%;
+  background:linear-gradient(135deg,rgba(255,255,255,.9),rgba(219,234,254,.9));
+  border:1px solid rgba(255,255,255,.95);
+  color:var(--accent);
+  display:grid;place-items:center;font-weight:800;font-size:12px;
+  box-shadow:0 4px 12px rgba(15,23,42,.08);
+}
+.menu-toggle{
+  display:none;
+  background:rgba(255,255,255,.78);
+  color:var(--accent);
+  border:1px solid rgba(255,255,255,.9);
+  padding:9px 12px;border-radius:12px;font-size:18px;line-height:1;
+  box-shadow:0 4px 12px rgba(15,23,42,.06);
+}
+.sidebar-backdrop{display:none}
+
+.section{display:none}
+.section.active{display:block;animation:sectionIn .34s var(--spring)}
+
+/* Glass Stat Cards */
+.cards{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:20px}
+.stat{
+  background:var(--card);
+  backdrop-filter:blur(22px) saturate(180%);
+  -webkit-backdrop-filter:blur(22px) saturate(180%);
+  border:1px solid var(--glass-border);
+  border-radius:var(--radius);
+  padding:17px 18px;
+  box-shadow:0 10px 30px rgba(15,23,42,.06), inset 0 1px 0 rgba(255,255,255,.92);
+  transition:transform .26s var(--spring), box-shadow .26s var(--spring), background .22s ease;
+}
+.stat:hover{
+  transform:translateY(-3px);
+  background:var(--card-strong);
+  box-shadow:0 16px 36px rgba(15,23,42,.10), inset 0 1px 0 rgba(255,255,255,.98);
+}
+.stat .label{color:var(--muted);font-size:12px;font-weight:650}
+.stat .value{font-size:24px;font-weight:800;margin:9px 0 5px;letter-spacing:-.5px}
+.stat .hint{font-size:11px;color:var(--good);font-weight:600}
+.stat .iconbox{
+  float:right;
+  background:rgba(255,255,255,.75);
+  border:1px solid rgba(255,255,255,.95);
+  border-radius:13px;padding:8px 9px;font-size:17px;
+  box-shadow:0 4px 12px rgba(15,23,42,.05);
+}
+
+/* Glass Panels */
+.panel{
+  background:var(--card);
+  backdrop-filter:blur(22px) saturate(180%);
+  -webkit-backdrop-filter:blur(22px) saturate(180%);
+  border:1px solid var(--glass-border);
+  border-radius:var(--radius);
+  padding:20px;
+  margin-bottom:16px;
+  box-shadow:0 10px 32px rgba(15,23,42,.06), inset 0 1px 0 rgba(255,255,255,.9);
+  min-width:0;
+}
+.panelhead{display:flex;justify-content:space-between;align-items:center;gap:12px;margin-bottom:14px;flex-wrap:wrap}
+.panelhead h3{font-size:15.5px;margin:0;font-weight:750;letter-spacing:-.2px}
+.panelhead p{font-size:12px;color:var(--muted);margin:4px 0 0}
+
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+.grid3{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}
+.formgrid{display:grid;grid-template-columns:repeat(2,1fr);gap:12px}
+.field.full{grid-column:1/-1}
+
+/* Glass Tables */
+.tablewrap{overflow-x:auto;max-width:100%;border-radius:14px}
+table{width:100%;border-collapse:collapse;font-size:12.5px}
+th{
+  text-align:left;color:#5b6b82;font-size:10.5px;text-transform:uppercase;letter-spacing:.6px;
+  padding:11px 10px;
+  border-bottom:1px solid var(--line);
+  background:rgba(255,255,255,.45);
+  white-space:nowrap;
+}
+td{padding:12px 10px;border-bottom:1px solid rgba(15,23,42,.05);vertical-align:middle}
+tbody tr{transition:background .18s ease}
+tbody tr:hover{background:rgba(255,255,255,.52)}
+tr:last-child td{border-bottom:0}
+
+.tag{
+  display:inline-block;padding:4px 9px;border-radius:999px;
+  background:rgba(37,91,197,.12);color:#1f4fa8;font-size:10.5px;font-weight:700;
+  border:1px solid rgba(37,91,197,.16);
+}
+.tag.green{background:rgba(16,147,101,.13);color:#0f7c55;border-color:rgba(16,147,101,.2)}
+.tag.orange{background:rgba(245,158,11,.15);color:#9a5b08;border-color:rgba(245,158,11,.24)}
+.tag.red{background:rgba(220,62,73,.13);color:#b92c36;border-color:rgba(220,62,73,.22)}
+
+.toolbar{display:flex;gap:9px;align-items:center;flex-wrap:wrap;margin-bottom:14px}
+.toolbar input{max-width:300px}
+.split{display:grid;grid-template-columns:1.15fr .85fr;gap:16px}
+.billgrid{display:grid;grid-template-columns:1fr 355px;gap:16px}
+
+/* Glass Product Tiles */
+.productbox{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+.producttile{
+  border:1px solid rgba(255,255,255,.82);
+  padding:13px;
+  border-radius:16px;
+  text-align:left;
+  background:rgba(255,255,255,.68);
+  backdrop-filter:blur(14px);
+  -webkit-backdrop-filter:blur(14px);
+  color:var(--ink);
+  box-shadow:0 4px 16px rgba(15,23,42,.05), inset 0 1px 0 rgba(255,255,255,.92);
+  transition:transform .22s var(--spring), border-color .2s ease, box-shadow .22s var(--spring), background .2s ease;
+}
+.producttile:hover:not(:disabled){
+  border-color:color-mix(in srgb,var(--accent) 55%,#93c5fd);
+  background:rgba(255,255,255,.9);
+  transform:translateY(-2px);
+  box-shadow:0 10px 24px rgba(15,23,42,.09), inset 0 1px 0 #fff;
+  filter:none;
+}
+.producttile b{display:block;font-size:13px}
+.producttile span{display:block;color:var(--muted);font-size:11px;margin:4px 0}
+.producttile strong{color:var(--accent);font-size:14px}
+
+.imei-badge{
+  display:inline-block;
+  background:rgba(255,255,255,.78);
+  color:#334155;
+  border:1px solid rgba(15,23,42,.09);
+  border-radius:7px;padding:2px 6px;font-size:10px;margin:2px 3px 2px 0;
+  font-family:ui-monospace,SFMono-Regular,Menlo,monospace;
+}
+
+.cartline{display:flex;justify-content:space-between;gap:9px;padding:11px 0;border-bottom:1px solid var(--line);font-size:12px}
+.cartline:last-child{border-bottom:0}
+.cartline small{display:block;color:var(--muted);margin-top:4px}
+.cart-imei-inputs{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-top:6px}
+.cart-imei-inputs input{padding:6px 8px;font-size:11px;border-radius:9px}
+.carttotals{border-top:1px solid var(--line);padding-top:13px;margin-top:9px}
+.totalrow{display:flex;justify-content:space-between;margin:7px 0;font-size:13px}
+.totalrow.big{font-size:18px;font-weight:800}
+.muted{color:var(--muted)}
+.empty{padding:30px 10px;text-align:center;color:var(--muted);font-size:12.5px}
+
+/* iOS Dynamic Pill Toast */
+.toast{
+  position:fixed;bottom:24px;right:24px;
+  background:rgba(15,23,42,.82);
+  backdrop-filter:blur(20px) saturate(180%);
+  -webkit-backdrop-filter:blur(20px) saturate(180%);
+  border:1px solid rgba(255,255,255,.18);
+  color:#fff;
+  padding:13px 18px;
+  border-radius:999px;
+  box-shadow:0 14px 36px rgba(15,23,42,.26);
+  display:none;z-index:2000;font-size:13px;font-weight:600;max-width:360px;
+  animation:toastIn .28s var(--spring);
+}
+
+/* iOS Glass Modal */
+.modalback{
+  position:fixed;inset:0;
+  background:rgba(15,23,42,.32);
+  backdrop-filter:blur(10px);
+  -webkit-backdrop-filter:blur(10px);
+  display:none;align-items:center;justify-content:center;padding:16px;z-index:1500;
+}
+.modal{
+  width:min(740px,100%);max-height:90vh;overflow:auto;
+  background:rgba(255,255,255,.82);
+  backdrop-filter:blur(28px) saturate(190%);
+  -webkit-backdrop-filter:blur(28px) saturate(190%);
+  border:1px solid rgba(255,255,255,.88);
+  border-radius:24px;
+  padding:22px;
+  box-shadow:0 28px 80px rgba(15,23,42,.24), inset 0 1px 0 rgba(255,255,255,.95);
+  position:relative;z-index:1501;
+  animation:modalPop .3s var(--spring);
+}
+.modalhead{display:flex;justify-content:space-between;align-items:center;margin-bottom:15px}
+.modalhead h3{margin:0;font-size:17px}
+.close{
+  background:rgba(15,23,42,.07);color:#1e293b;border:1px solid rgba(255,255,255,.7);
+  padding:7px 11px;border-radius:999px;box-shadow:none;
+}
+.close:hover{background:rgba(15,23,42,.13);transform:scale(1.04);box-shadow:none}
+
+.imei-section-box{
+  grid-column:1/-1;
+  background:rgba(235,244,255,.65);
+  border:1px solid rgba(59,130,246,.22);
+  border-radius:16px;padding:13px;
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.85);
+}
+.imei-section-box h4{margin:0 0 10px;font-size:11.5px;color:var(--accent);text-transform:uppercase;letter-spacing:.7px}
+
+.previewgrid{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+.settingspreview{
+  background:rgba(255,255,255,.45);
+  border:1px solid rgba(255,255,255,.78);
+  border-radius:18px;padding:16px;
+}
+.settingspreview h4{margin:0 0 8px}
+.settingspreview .previewbill{background:rgba(255,255,255,.92);border:1px solid rgba(15,23,42,.08);padding:15px;border-radius:13px;font-size:11px}
+.settingspreview .previewbill .accent{color:var(--accent);font-weight:800}
+
+/* Glass Mobile Bottom Dock */
+.mobilebottom{display:none}
+
+/* Invoice styling (Crisp Paper) */
+.billpaper{font-family:Arial,Helvetica,sans-serif;color:#182333;max-width:900px;min-height:1050px;padding:28px 34px;border:1px solid #dce4ed;border-radius:14px;box-shadow:0 16px 45px rgba(15,23,42,.10);background:#fff;margin:0 auto}
+.invoice-topline{height:7px;background:linear-gradient(90deg,var(--accent),#2876a8,#d6a64b);margin:-28px -34px 22px;border-radius:14px 14px 0 0}
+.invoice-head{display:grid;grid-template-columns:1.2fr .8fr;gap:18px;align-items:stretch;padding-bottom:18px;border-bottom:2px solid var(--accent)}
+.invoice-brand{display:flex;gap:14px;align-items:center}
+.invoice-monogram{width:64px;height:64px;border-radius:14px;background:var(--accent);color:#fff;display:grid;place-items:center;font-size:24px;font-weight:900;letter-spacing:-1px;flex:0 0 auto}
+.invoice-shop{font-size:28px;font-weight:900;letter-spacing:1px;color:var(--accent);line-height:1.1}
+.invoice-prop{font-size:12px;font-weight:700;color:#a2772e;margin-top:5px}
+.invoice-address{font-size:11px;line-height:1.55;color:#536276;margin-top:7px}
+.invoice-contact{font-size:11px;font-weight:700;color:#263a50;margin-top:5px}
+.invoice-titlebox{background:#f1f5f9;border:1px solid #dbe5ef;border-radius:12px;padding:14px;text-align:right}
+.invoice-titlebox strong{font-size:21px;letter-spacing:1.2px;color:var(--accent)}
+.invoice-titlebox div{font-size:11px;line-height:1.8;color:#4d5e72}
+.invoice-gst{display:inline-block;margin-top:10px;padding:6px 10px;border:1px solid #cbd7e3;border-radius:6px;font-size:11px;font-weight:700;color:#334a60}
+.invoice-parties{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin:18px 0}
+.invoice-party{border:1px solid #dce4ed;border-radius:10px;padding:12px 14px;min-height:100px}
+.invoice-party h4{margin:0 0 9px;font-size:10px;letter-spacing:1px;color:#9b742f;text-transform:uppercase}
+.invoice-party p{margin:4px 0;font-size:12px;line-height:1.45}
+.invoice-table{width:100%;border-collapse:collapse;margin-top:12px;font-size:11px}
+.invoice-table th{background:var(--accent);color:#fff;padding:11px 9px;text-transform:uppercase;letter-spacing:.5px;font-size:10px}
+.invoice-table td{padding:12px 9px;border-bottom:1px solid #e6ebf0;vertical-align:top}
+.invoice-table .sl{width:34px;text-align:center}
+.invoice-table .num{text-align:right;white-space:nowrap}
+.invoice-table .itemname{font-size:12px;color:#182c40}
+.invoice-table .deviceinfo{font-size:10px;line-height:1.65;color:#526276;margin-top:6px;padding:7px 9px;background:#f5f8fb;border-left:3px solid #d3a44d;border-radius:0 5px 5px 0}
+.invoice-bottom{display:grid;grid-template-columns:1fr 285px;gap:20px;margin-top:18px}
+.invoice-terms{font-size:10px;line-height:1.55;color:#586779}
+.invoice-terms strong{color:#263c53}
+.invoice-totals{border:1px solid #dce4ed;border-radius:10px;overflow:hidden}
+.invoice-totals .totalrow{padding:8px 12px;margin:0;border-bottom:1px solid #e9eef3;font-size:11px}
+.invoice-totals .grand{background:var(--accent);color:#fff;font-size:15px;font-weight:800;padding:12px}
+.invoice-totals .balance{font-weight:800;color:#a15d1b}
+.invoice-signatures{display:flex;justify-content:space-between;gap:30px;margin-top:35px;font-size:10px;color:#536276}
+.invoice-signatures span{border-top:1px solid #9eabb9;padding-top:7px;min-width:180px;text-align:center}
+.invoice-qr-area{display:flex;align-items:center;justify-content:center;gap:15px;border-top:1px dashed #bdc9d5;border-bottom:1px dashed #bdc9d5;padding:12px;margin-top:22px}
+.invoice-qr{width:92px;height:92px;object-fit:contain}
+.qr-placeholder{width:92px;height:92px;border:1px dashed #aab7c5;display:grid;place-items:center;text-align:center;font-size:9px;padding:8px;color:#718096}
+.qr-copy{font-size:10px;line-height:1.6;color:#536276}
+.qr-copy strong{display:block;color:var(--accent);font-size:12px;letter-spacing:.5px}
+.invoice-dealer{text-align:center;font-size:9px;color:#596a7c;margin-top:12px;font-weight:700;letter-spacing:.2px}
+.invoice-thanks{text-align:center;font-size:11px;color:var(--accent);font-weight:800;margin-top:12px}
+
+/* Responsive layout */
+@media(max-width:1100px){
+  .cards{grid-template-columns:repeat(2,1fr)}
+  .billgrid,.split{grid-template-columns:1fr}
+}
+@media(max-width:1000px){
+  .menu-toggle{display:inline-flex;align-items:center;justify-content:center;flex:0 0 auto}
+  .sidebar{width:270px;max-width:82vw;transform:translateX(-110%);transition:transform .28s var(--spring)}
+  body.sidebar-open .sidebar{transform:translateX(0)}
+  .sidebar-backdrop{
+    display:block;position:fixed;inset:0;
+    background:rgba(8,18,34,.36);
+    backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);
+    z-index:119;opacity:0;visibility:hidden;transition:opacity .25s ease,visibility .25s ease;
+  }
+  body.sidebar-open .sidebar-backdrop{opacity:1;visibility:visible}
+  .main{margin-left:0;width:100%;padding:16px 16px 96px}
+}
+@media(max-width:760px){
+  .topbar{align-items:center;padding:12px 14px;border-radius:18px}
+  .topbar h1{font-size:19px}
+  .topbar p{font-size:11px}
+  .topright .desktop{display:none}
+  .grid2,.grid3,.formgrid,.previewgrid,.invoice-head,.invoice-parties,.invoice-bottom{grid-template-columns:1fr}
+  .field.full{grid-column:1}
+  .panel{padding:15px;border-radius:18px}
+  .billpaper{padding:14px;min-height:auto}
+  .invoice-topline{margin:-14px -14px 14px}
+  .invoice-shop{font-size:21px}
+  .mobilebottom{
+    display:flex;position:fixed;bottom:12px;left:12px;right:12px;
+    background:rgba(255,255,255,.72);
+    backdrop-filter:blur(22px) saturate(190%);
+    -webkit-backdrop-filter:blur(22px) saturate(190%);
+    border:1px solid rgba(255,255,255,.88);
+    border-radius:20px;
+    padding:8px;gap:7px;z-index:100;
+    box-shadow:0 12px 32px rgba(15,23,42,.14), inset 0 1px 0 rgba(255,255,255,.95);
+  }
+  .mobilebottom button{flex:1;font-size:11px;padding:10px 4px;border-radius:13px}
+}
+@media(max-width:600px){
+  .topright .avatar{display:none}
+  .cards{grid-template-columns:1fr 1fr;gap:10px}
+  .stat{padding:13px;border-radius:18px}
+  .stat .value{font-size:19px}
+  .productbox{grid-template-columns:1fr}
+  .modalback{padding:10px;align-items:flex-end}
+  .modal{width:100%;max-height:92dvh;border-radius:24px 24px 14px 14px;padding:18px}
+  .toast{left:16px;right:16px;bottom:84px;max-width:none;text-align:center}
+}
+@media (prefers-reduced-motion:reduce){
+  *{animation:none!important;transition:none!important}
+}
+
+/* Clean Print CSS */
+@media print{
+  @page{size:A4;margin:0}
+  body.paper-a5{--print-width:148mm;--print-height:210mm}
+  html,body{background:#fff!important;margin:0!important;padding:0!important}
+  .ios-bg-orbs,.sidebar,.sidebar-backdrop,.topbar,.mobilebottom,.toast,.modalback,.section:not(#billPrintSection),#billPrintSection>.panel{display:none!important}
+  .main{margin:0!important;padding:0!important;width:100%!important}
+  #billPrintSection{display:block!important;animation:none!important}
+  #invoicePaper{display:block!important;width:var(--print-width,210mm)!important;min-height:var(--print-height,297mm)!important;max-width:none!important;margin:0 auto!important;padding:12mm!important;border:0!important;border-radius:0!important;box-shadow:none!important}
+  #invoicePaper .invoice-topline{margin:-12mm -12mm 8mm!important;border-radius:0!important}
+  #invoicePaper .invoice-head{grid-template-columns:1.2fr .8fr!important}
+  #invoicePaper .invoice-parties{grid-template-columns:1fr 1fr!important}
+  #invoicePaper .invoice-bottom{grid-template-columns:1fr 260px!important}
+  #invoicePaper .invoice-topline,#invoicePaper .invoice-monogram,#invoicePaper .invoice-table th,#invoicePaper .invoice-totals .grand{print-color-adjust:exact!important;-webkit-print-color-adjust:exact!important}
+}
+
+/* Cloud Sync & Auth Pill */
+.cloud-pill{
+  display:inline-flex;align-items:center;gap:7px;
+  padding:7px 12px;border-radius:999px;font-size:12px;font-weight:700;
+  background:rgba(255,255,255,.72);
+  backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);
+  border:1px solid rgba(255,255,255,.9);
+  color:#1e293b;cursor:pointer;
+  box-shadow:0 4px 12px rgba(15,23,42,.06);
+  transition:transform .2s var(--spring), background .2s ease;
+}
+.cloud-pill:hover{background:rgba(255,255,255,.95);transform:translateY(-1px)}
+.cloud-dot{width:8px;height:8px;border-radius:50%;background:#94a3b8;flex:0 0 auto}
+.cloud-pill.online .cloud-dot{background:#10b981;box-shadow:0 0 0 3px rgba(16,185,129,.22)}
+.cloud-pill.syncing .cloud-dot{background:#f59e0b;box-shadow:0 0 0 3px rgba(245,158,11,.22)}
+.cloud-pill.error .cloud-dot{background:#ef4444}
+.auth-card{display:flex;flex-direction:column;gap:8px}
+.auth-user{display:flex;align-items:center;gap:9px}
+.auth-user img{width:30px;height:30px;border-radius:50%;border:1px solid rgba(255,255,255,.4);object-fit:cover}
+.auth-user div{min-width:0;flex:1}
+.auth-user b{display:block;font-size:12px;color:#fff;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.auth-user span{display:block;font-size:10px;color:#9bb0cf;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.google-btn{
+  width:100%;display:flex;align-items:center;justify-content:center;gap:8px;
+  background:#fff!important;color:#1e293b!important;border:1px solid rgba(255,255,255,.9)!important;
+  padding:9px 12px!important;border-radius:11px!important;font-size:12px!important;font-weight:700!important;
+  box-shadow:0 4px 14px rgba(0,0,0,.15)!important;
+}
+.google-btn:hover{background:#f8fafc!important}
+.signout-btn{
+  width:100%;background:rgba(255,255,255,.12)!important;color:#e2e8f0!important;
+  border:1px solid rgba(255,255,255,.18)!important;padding:7px 10px!important;
+  border-radius:10px!important;font-size:11px!important;box-shadow:none!important;
+}
+.signout-btn:hover{background:rgba(239,68,68,.28)!important;color:#fff!important}
+@media(max-width:600px){
+  .cloud-pill span.cloud-text{display:none}
+  .cloud-pill{padding:8px 10px}
+}
+</style>
+</head>
+<body>
+<div class="ios-bg-orbs" aria-hidden="true"><div class="ios-orb o1"></div><div class="ios-orb o2"></div><div class="ios-orb o3"></div></div>
+<div class="app">
+<aside class="sidebar">
+ <div class="brand"><div class="logo" id="sideLogo">SE</div><div class="brandtext"><h2 id="sideShop">SUN ENTERPRISE</h2><small>TLCM POS PRO · CLOUD</small></div></div>
+ <div class="navlabel">Workspace</div>
+ <nav class="nav">
+  <button class="active" data-page="dashboard"><span class="navico">▦</span><span class="navtext">Dashboard</span></button>
+  <button data-page="billing"><span class="navico">🧾</span><span class="navtext">New Billing</span></button>
+  <button data-page="sales"><span class="navico">↗</span><span class="navtext">Sales History</span></button>
+  <button data-page="products"><span class="navico">📱</span><span class="navtext">Products & IMEI</span></button>
+  <button data-page="inventory"><span class="navico">▣</span><span class="navtext">Inventory</span></button>
+  <button data-page="customers"><span class="navico">♙</span><span class="navtext">Customers</span></button>
+  <button data-page="emi"><span class="navico">◷</span><span class="navtext">EMI Manager</span></button>
+  <button data-page="collection"><span class="navico">₹</span><span class="navtext">EMI Collection</span></button>
+  <button data-page="repair"><span class="navico">🔧</span><span class="navtext">Repair Center</span></button>
+  <button data-page="reports"><span class="navico">▤</span><span class="navtext">Reports</span></button>
+  <button data-page="thankyou"><span class="navico">💌</span><span class="navtext">Thank You Cards</span></button>
+  <button data-page="settings"><span class="navico">⚙</span><span class="navtext">Settings</span></button>
+ </nav>
+ <div class="sidebottom" id="sideAuthBox">
+  <div class="auth-card">
+   <strong>☁ TLCM Cloud Sync</strong>
+   <p style="margin:0;font-size:11px;color:#b8c8df">Sign in with Google to sync all devices live.</p>
+   <button type="button" class="google-btn" onclick="googleSignIn()">
+    <svg width="15" height="15" viewBox="0 0 48 48"><path fill="#FFC107" d="M43.6 20.1H42V20H24v8h11.3C33.7 32.7 29.2 36 24 36c-6.6 0-12-5.4-12-12s5.4-12 12-12c3.1 0 5.8 1.2 8 3l5.7-5.7C34 6 29.3 4 24 4 12.9 4 4 12.9 4 24s8.9 20 20 20 20-8.9 20-20c0-1.3-.1-2.6-.4-3.9z"/><path fill="#FF3D00" d="M6.3 14.7l6.6 4.8C14.7 15.1 19 12 24 12c3.1 0 5.8 1.2 8 3l5.7-5.7C34 6 29.3 4 24 4 16.3 4 9.7 8.3 6.3 14.7z"/><path fill="#4CAF50" d="M24 44c5.2 0 9.9-2 13.4-5.2l-6.2-5.2C29.2 35.1 26.7 36 24 36c-5.2 0-9.6-3.3-11.3-7.9l-6.5 5C9.5 39.6 16.2 44 24 44z"/><path fill="#1976D2" d="M43.6 20.1H42V20H24v8h11.3c-.8 2.2-2.2 4.2-4.1 5.6l6.2 5.2C37 39.2 44 34 44 24c0-1.3-.1-2.6-.4-3.9z"/></svg>
+    Sign in with Google
+   </button>
+  </div>
+ </div>
+</aside>
+<div class="sidebar-backdrop" id="sidebarBackdrop" onclick="closeSidebar()"></div>
+<main class="main">
+<header class="topbar">
+ <div class="topbar-left">
+  <button class="menu-toggle" id="menuToggle" type="button" aria-label="Open menu" onclick="toggleSidebar()">☰</button>
+  <div><h1 id="pageTitle">Dashboard</h1><p id="pageSub">Store overview and activity at a glance.</p></div>
+ </div>
+ <div class="topright">
+  <button type="button" class="cloud-pill" id="cloudPill" onclick="handleCloudPillClick()" title="Cloud Sync Status">
+   <span class="cloud-dot"></span>
+   <span class="cloud-text" id="cloudPillText">Sign in</span>
+  </button>
+  <button class="secondary desktop" onclick="navigate('billing')">＋ New Bill</button>
+  <div class="avatar" id="topAvatar">SE</div>
+ </div>
+</header>
+
+<!-- DASHBOARD -->
+<section id="dashboard" class="section active">
+ <div class="cards">
+  <div class="stat"><span class="iconbox">🧾</span><div class="label">Today's Sales</div><div class="value" id="statSales">₹0</div><div class="hint">Today's total billed</div></div>
+  <div class="stat"><span class="iconbox">💳</span><div class="label">Outstanding Due</div><div class="value" id="statDue">₹0</div><div class="hint">From saved invoices</div></div>
+  <div class="stat"><span class="iconbox">📆</span><div class="label">Active EMI</div><div class="value" id="statEmi">0</div><div class="hint">Installment accounts</div></div>
+  <div class="stat"><span class="iconbox">📦</span><div class="label">Products</div><div class="value" id="statProducts">0</div><div class="hint">Catalog items</div></div>
+ </div>
+ <div class="grid2">
+  <div class="panel"><div class="panelhead"><div><h3>Recent Bills</h3><p>Latest billing activity</p></div><button class="secondary small" onclick="navigate('sales')">View all</button></div><div id="recentBills"></div></div>
+  <div class="panel"><div class="panelhead"><div><h3>Quick Actions</h3><p>Jump into common tasks</p></div></div><div class="grid2"><button onclick="navigate('billing')">＋ Create Bill</button><button class="secondary" onclick="navigate('products');openProductModal()">＋ Add Product</button><button class="secondary" onclick="navigate('collection')">₹ Collect EMI</button><button class="secondary" onclick="navigate('customers');openCustomerModal()">♙ Add Customer</button></div></div>
+ </div>
+ <div class="panel"><div class="panelhead"><div><h3>Store Snapshot</h3><p>Low stock alert (3 or fewer left)</p></div></div><div id="stockSnapshot"></div></div>
+</section>
+
+<!-- BILLING -->
+<section id="billing" class="section">
+ <div class="billgrid">
+  <div class="panel">
+   <div class="panelhead"><div><h3>Build Invoice</h3><p>Search by product, barcode, IMEI 1 or IMEI 2</p></div><button class="ghost small" onclick="clearCart()">Clear cart</button></div>
+   <div class="toolbar">
+    <input id="productSearch" placeholder="Search products, barcode, IMEI 1 / IMEI 2…" oninput="renderProductTiles()">
+    <select id="categoryFilter" onchange="renderProductTiles()" style="max-width:170px"><option value="">All categories</option></select>
+   </div>
+   <div class="productbox" id="productTiles"></div>
+
+   <div class="panelhead" style="margin-top:22px"><div><h3>Customer Details</h3><p>Optional for walk-in cash sale</p></div><button class="secondary small" onclick="quickCustomer()">＋ Add Customer</button></div>
+   <div class="formgrid">
+    <div class="field"><label>Customer name</label><input id="billCustomer" placeholder="Walk-in / Customer name" list="customerNameList" onchange="autoFillCustomerByName()"></div>
+    <div class="field"><label>Phone number</label><input id="billPhone" placeholder="10 digit phone" oninput="autoFillCustomerByPhone()"></div>
+    <div class="field full"><label>Customer address (optional)</label><input id="billAddress" placeholder="Village / City / PIN"></div>
+   </div>
+   <datalist id="customerNameList"></datalist>
+
+   <div class="panelhead" style="margin-top:20px"><div><h3>Payment</h3></div></div>
+   <div class="formgrid">
+    <div class="field"><label>Payment method</label><select id="payMethod"><option>Cash</option><option>UPI</option><option>Card</option><option>Bank Transfer</option><option>EMI</option><option>Partial Payment</option></select></div>
+    <div class="field"><label>Amount received (₹)</label><input id="amountPaid" type="number" min="0" placeholder="Auto full amount" oninput="renderCart()"></div>
+    <div class="field"><label>Discount (₹)</label><input id="discount" type="number" min="0" value="0" oninput="renderCart()"></div>
+    <div class="field"><label>Buyer GSTIN (optional)</label><input id="billBuyerGst" placeholder="Leave blank if retail"></div>
+   </div>
+  </div>
+
+  <div class="panel">
+   <div class="panelhead"><div><h3>Current Bill</h3><p id="cartCount">0 items</p></div></div>
+   <div id="cartLines"></div>
+   <div class="carttotals">
+    <div class="totalrow"><span>Subtotal</span><b id="cartSubtotal">₹0</b></div>
+    <div class="totalrow"><span>Discount</span><b id="cartDiscount">₹0</b></div>
+    <div class="totalrow big"><span>Grand Total</span><b id="cartTotal">₹0</b></div>
+    <div class="totalrow"><span>Paid</span><b id="cartPaid">₹0</b></div>
+    <div class="totalrow"><span>Balance</span><b id="cartBalance">₹0</b></div>
+   </div>
+   <button style="width:100%;margin-top:14px" onclick="checkout()">Generate Invoice & Save</button>
+   <button class="secondary" style="width:100%;margin-top:8px" onclick="navigate('thankyou')">Thank You Card</button>
+  </div>
+ </div>
+</section>
+
+<!-- PRODUCTS -->
+<section id="products" class="section">
+ <div class="panel">
+  <div class="panelhead"><div><h3>Product Catalog</h3><p>Manage products, IMEI 1, IMEI 2, serial numbers and barcodes</p></div><button onclick="openProductModal()">＋ Add Product</button></div>
+  <div class="toolbar"><input placeholder="Search name, brand, barcode, IMEI 1, IMEI 2…" id="catalogSearch" oninput="renderProducts()"><button class="secondary" onclick="openCategoryModal()">Manage Categories</button></div>
+  <div id="productsTable"></div>
+ </div>
+</section>
+
+<!-- INVENTORY -->
+<section id="inventory" class="section">
+ <div class="panel">
+  <div class="panelhead"><div><h3>Inventory</h3><p>Current quantities and stock value</p></div><button class="secondary" onclick="navigate('products')">Manage products</button></div>
+  <div id="inventoryTable"></div>
+ </div>
+</section>
+
+<!-- SALES -->
+<section id="sales" class="section">
+ <div class="panel">
+  <div class="panelhead"><div><h3>Sales History</h3><p>Saved invoices, preview and reprint</p></div></div>
+  <div class="toolbar"><input id="salesSearch" placeholder="Search invoice, customer, phone, IMEI…" oninput="renderSales()"></div>
+  <div id="salesTable"></div>
+ </div>
+</section>
+
+<!-- CUSTOMERS -->
+<section id="customers" class="section">
+ <div class="panel">
+  <div class="panelhead"><div><h3>Customer Directory</h3><p>Purchase and payment overview</p></div><button onclick="openCustomerModal()">＋ Add Customer</button></div>
+  <div class="toolbar"><input id="customerSearch" placeholder="Search customers…" oninput="renderCustomers()"></div>
+  <div id="customersTable"></div>
+ </div>
+</section>
+
+<!-- EMI -->
+<section id="emi" class="section">
+ <div class="panel">
+  <div class="panelhead"><div><h3>EMI Manager</h3><p>Installment accounts, due dates, pending balances</p></div><button onclick="openEmiModal()">＋ Create EMI Plan</button></div>
+  <div class="cards" style="margin-top:12px">
+   <div class="stat"><div class="label">Active Accounts</div><div class="value" id="emiActive">0</div></div>
+   <div class="stat"><div class="label">Outstanding</div><div class="value" id="emiOutstanding">₹0</div></div>
+   <div class="stat"><div class="label">Due Today</div><div class="value" id="emiDueToday">₹0</div></div>
+   <div class="stat"><div class="label">Overdue</div><div class="value" id="emiOverdue">₹0</div></div>
+  </div>
+  <div id="emiTable"></div>
+ </div>
+</section>
+
+<!-- COLLECTION -->
+<section id="collection" class="section">
+ <div class="panel">
+  <div class="panelhead"><div><h3>EMI Collection</h3><p>Record installment payments</p></div></div>
+  <div class="toolbar"><input id="collectSearch" placeholder="Search EMI customer / phone…" oninput="renderCollection()"></div>
+  <div id="collectionTable"></div>
+ </div>
+</section>
+
+<!-- REPAIR -->
+<section id="repair" class="section">
+ <div class="panel">
+  <div class="panelhead"><div><h3>Repair Center</h3><p>Quick repair/service billing</p></div><button onclick="addRepairToCart()">＋ Add repair to bill</button></div>
+  <div class="formgrid">
+   <div class="field"><label>Customer</label><input id="repairName" placeholder="Customer name"></div>
+   <div class="field"><label>Phone</label><input id="repairPhone" placeholder="Phone number"></div>
+   <div class="field"><label>Device</label><input id="repairDevice" placeholder="Model name"></div>
+   <div class="field"><label>IMEI 1 (optional)</label><input id="repairImei" placeholder="15-digit IMEI 1"></div>
+   <div class="field full"><label>Service / Repair</label><input id="repairService" placeholder="Display replacement, charging IC, software etc."></div>
+   <div class="field"><label>Parts charge (₹)</label><input id="repairParts" type="number" min="0" value="0"></div>
+   <div class="field"><label>Labour charge (₹)</label><input id="repairLabour" type="number" min="0" value="0"></div>
+  </div>
+ </div>
+</section>
+
+<!-- REPORTS -->
+<section id="reports" class="section">
+ <div class="cards">
+  <div class="stat"><div class="label">Total Invoice Count</div><div class="value" id="reportCount">0</div></div>
+  <div class="stat"><div class="label">Total Billed</div><div class="value" id="reportBilled">₹0</div></div>
+  <div class="stat"><div class="label">Total Collected</div><div class="value" id="reportCollected">₹0</div></div>
+  <div class="stat"><div class="label">Total Due</div><div class="value" id="reportDue">₹0</div></div>
+ </div>
+ <div class="panel">
+  <div class="panelhead">
+   <div><h3>Sales Summary</h3><p>Reporting from saved bills</p></div>
+   <div style="display:flex;gap:8px;flex-wrap:wrap">
+    <button class="secondary" onclick="exportData()">Export JSON backup</button>
+    <button class="ghost" onclick="document.getElementById('importFile').click()">Import JSON backup</button>
+    <input type="file" id="importFile" accept=".json" style="display:none" onchange="importData(event)">
+   </div>
+  </div>
+  <div id="reportSummary"></div>
+ </div>
+</section>
+
+<!-- THANK YOU -->
+<section id="thankyou" class="section">
+ <div class="grid2">
+  <div class="panel">
+   <div class="panelhead"><div><h3>Thank You Card</h3><p>Personalized message for WhatsApp sharing</p></div></div>
+   <div class="formgrid">
+    <div class="field full"><label>Customer name</label><input id="tyName" placeholder="Customer name" oninput="renderThankCard()"></div>
+    <div class="field full"><label>Message</label><textarea id="tyMessage" rows="5" oninput="renderThankCard()">Thank you for shopping with us! We truly appreciate your trust. If you need any assistance, warranty support, or anything else, we're always here for you.</textarea></div>
+   </div>
+   <button style="margin-top:12px" onclick="shareThankYou()">Share on WhatsApp</button>
+   <button class="secondary" style="margin-top:12px" onclick="downloadThankCard()">Download Card PNG</button>
+  </div>
+  <div class="panel">
+   <div class="panelhead"><div><h3>Card Preview</h3></div></div>
+   <div id="thankCardPreview" style="border-radius:18px;padding:26px;text-align:center;background:linear-gradient(145deg,#1c2e4d,#2e62ba);color:#fff;min-height:240px">
+    <div style="font-size:28px">♥</div>
+    <h2 id="tyPreviewShop">SUN ENTERPRISE</h2>
+    <p id="tyPreviewName">Dear Customer,</p>
+    <p id="tyPreviewMsg">Thank you for shopping with us!</p>
+    <small>We appreciate your trust and support.</small>
+   </div>
+  </div>
+ </div>
+</section>
+
+<!-- SETTINGS -->
+<section id="settings" class="section">
+ <div class="panel">
+  <div class="panelhead"><div><h3>POS Settings</h3><p>Customize your store and invoice template</p></div><button onclick="saveSettings()">Save Settings</button></div>
+  <div class="previewgrid">
+   <div>
+    <h4>Store Information</h4>
+    <div class="formgrid">
+     <div class="field"><label>Shop Name</label><input id="setShop"></div>
+     <div class="field"><label>Proprietor</label><input id="setOwner"></div>
+     <div class="field"><label>Phone / Contact</label><input id="setPhone"></div>
+     <div class="field full"><label>Full Address</label><textarea id="setAddress" rows="2"></textarea></div>
+     <div class="field"><label>GSTIN</label><input id="setGst"></div>
+     <div class="field"><label>Invoice Prefix</label><input id="setPrefix"></div>
+     <div class="field"><label>Accent colour</label><input id="setAccent" type="color" style="height:44px;padding:3px"></div>
+     <div class="field"><label>Paper size</label><select id="setPaper"><option>A4</option><option>A5</option></select></div>
+     <div class="field"><label>Invoice title</label><input id="setInvoiceTitle"></div>
+     <div class="field full"><label>QR destination URL (Website / Google Review link)</label><input id="setQrUrl" placeholder="Paste your exact website or Google review link"></div>
+     <div class="field full"><label>Text below QR code</label><input id="setQrLabel"></div>
+     <div class="field full"><label>Terms & Conditions</label><textarea id="setTerms" rows="3"></textarea></div>
+     <div class="field full"><label>Business category footer</label><textarea id="setDealerLine" rows="2"></textarea></div>
+     <div class="field full"><label>Bill footer / Thank you note</label><textarea id="setFooter" rows="2"></textarea></div>
+    </div>
+   </div>
+   <div class="settingspreview">
+    <h4>Live Bill Preview</h4>
+    <div class="previewbill">
+     <div class="accent" id="previewShop">SUN ENTERPRISE</div>
+     <div id="previewAddress">Shop address will appear here</div>
+     <hr>
+     <b id="previewInvoiceTitle">TAX INVOICE</b>
+     <p>Invoice: SE-0001</p>
+     <p>Customer: Sample Customer</p>
+     <table><tr><th>Product</th><th>Qty</th><th>Amount</th></tr><tr><td>Smartphone<br><small class="muted">IMEI 1: 356938035643809</small></td><td>1</td><td>₹18,999</td></tr></table>
+     <hr>
+     <b>Total: ₹18,999</b>
+     <p id="previewFooter">Thank you for choosing us!</p>
+    </div>
+    <p class="muted" style="font-size:11px;margin-top:10px">Template controls apply to all invoices and print output. Paste your exact Google review or website URL above; the QR code prints at the bottom of every invoice.</p>
+   </div>
+  </div>
+ </div>
+ <div class="panel">
+  <div class="panelhead"><div><h3>Demo Data</h3><p>Clear the local data to start fresh</p></div><button class="danger" onclick="resetDemo()">Reset All Data</button></div>
+  <p class="muted" style="font-size:12px">Data is stored in this browser using localStorage. Use Export JSON backup in Reports before clearing browser data.</p>
+ </div>
+</section>
+
+<!-- PRINT INVOICE -->
+<section id="billPrintSection" class="section">
+ <div class="panel">
+  <div class="panelhead">
+   <div><h3>Invoice Ready</h3><p>Preview your bill, then print or save as PDF.</p></div>
+   <div style="display:flex;gap:8px;flex-wrap:wrap">
+    <button class="secondary" onclick="navigate('sales')">Back to Sales</button>
+    <button onclick="printInvoice()">Print / Save PDF</button>
+   </div>
+  </div>
+ </div>
+ <div id="invoicePaper" class="billpaper"></div>
+</section>
+</main>
+</div>
+
+<div class="mobilebottom">
+ <button onclick="navigate('billing')">＋ Bill</button>
+ <button class="secondary" onclick="navigate('products')">Products</button>
+ <button class="secondary" onclick="navigate('emi')">EMI</button>
+ <button class="secondary" onclick="navigate('dashboard')">Home</button>
+</div>
+<div id="toast" class="toast"></div>
+<div id="modalBack" class="modalback" onclick="if(event.target===this)closeModal()">
+ <div class="modal">
+  <div class="modalhead"><h3 id="modalTitle">Modal</h3><button class="close" type="button" onclick="closeModal()">✕</button></div>
+  <div id="modalContent"></div>
+ </div>
+</div>
+
+<script>
+const money=n=>'₹'+(Number(n||0)).toLocaleString('en-IN',{maximumFractionDigits:2});
+const id=()=>Math.random().toString(36).slice(2,9).toUpperCase();
+function esc(x){return String(x??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}
+function initials(name){
+ const parts=String(name||'SE').trim().split(/\s+/).filter(Boolean);
+ if(!parts.length)return 'SE';
+ return parts.length===1?parts[0].slice(0,2).toUpperCase():(parts[0][0]+parts[1][0]).toUpperCase();
+}
+function safeLoad(){try{return JSON.parse(window.localStorage.getItem('mobipos-demo')||'null')}catch(err){return null}}
+function safeSave(value){try{window.localStorage.setItem('mobipos-demo',JSON.stringify(value));return true}catch(err){return false}}
+function safeClear(){try{window.localStorage.removeItem('mobipos-demo')}catch(err){}}
+
+const defaultSettings={
+ shop:'SUN ENTERPRISE',
+ owner:'Abdus Salam',
+ phone:'7872532205 / 9064048464 / 6294883592',
+ address:'Vill. Parsujapur, P.O. Nayansukh, P.S. Farakka, Dist. Murshidabad, West Bengal - 742202',
+ gst:'19FWMPS0400P1ZX',
+ prefix:'SE',
+ accent:'#174A78',
+ footer:'Goods once sold cannot be taken back. All goods carry manufacturer warranty. Please visit us again. Thank you!',
+ paper:'A4',
+ invoiceTitle:'TAX INVOICE',
+ qrUrl:'https://www.google.com/search?q=SUN+ENTERPRISE+Farakka+reviews',
+ qrLabel:'SCAN TO VISIT OUR WEBSITE / WRITE A GOOGLE REVIEW',
+ terms:'1. Goods once sold cannot be taken back.\n2. All goods carry manufacturer warranty.\n3. Technical issues will be handled by the concerned manufacturer.\n4. Customer must bring the device to our service centre for service.',
+ dealerLine:'Dealing in MOBILE PHONES OPPO, VIVO, SAMSUNG, REALME, MI, NOKIA, ONEPLUS, iPHONE, ETC.'
+};
+
+const defaultProducts=[
+ {id:'p1',category:'Smartphones',name:'Samsung Galaxy A56',brand:'Samsung',price:34999,cost:30000,stock:2,barcode:'890100000001',imei:'',imei2:'',modelNo:'SM-A566B',serial:'',batteryNo:'',chargerNo:'',ram:'8GB',storage:'128GB',colour:'Awesome Black',battery:'5000mAh',warranty:'1 Year'},
+ {id:'p2',category:'Smartphones',name:'iPhone 15',brand:'Apple',price:54999,cost:49000,stock:1,barcode:'890100000002',imei:'',imei2:'',modelNo:'A3090',serial:'',batteryNo:'',chargerNo:'',ram:'6GB',storage:'128GB',colour:'Blue',battery:'',warranty:'1 Year'},
+ {id:'p3',category:'Chargers',name:'25W Fast Charger',brand:'Samsung',price:999,cost:600,stock:8,barcode:'890100000003',imei:'',imei2:'',modelNo:'',serial:'',batteryNo:'',chargerNo:'',ram:'',storage:'',colour:'White',battery:'',warranty:'6 Months'},
+ {id:'p4',category:'Accessories',name:'Tempered Glass',brand:'Universal',price:199,cost:50,stock:15,barcode:'890100000004',imei:'',imei2:'',modelNo:'',serial:'',batteryNo:'',chargerNo:'',ram:'',storage:'',colour:'Clear',battery:'',warranty:'No warranty'},
+ {id:'p5',category:'Repair Services',name:'Display Repair Service',brand:'Service',price:1500,cost:800,stock:99,barcode:'SRV-001',imei:'',imei2:'',modelNo:'',serial:'',batteryNo:'',chargerNo:'',ram:'',storage:'',colour:'',battery:'',warranty:'30 Days'}
+];
+
+let state=safeLoad()||{
+ products:defaultProducts,
+ categories:['Smartphones','Feature Phones','Chargers','Accessories','Tempered Glass','Repair Services'],
+ customers:[],
+ bills:[],
+ emi:[],
+ collections:[],
+ settings:{...defaultSettings}
+};
+
+state.settings={...defaultSettings,...(state.settings||{})};
+state.products=Array.isArray(state.products)?state.products.map(p=>({imei:'',imei2:'',modelNo:'',serial:'',batteryNo:'',chargerNo:'',...p})):[];
+state.categories=Array.isArray(state.categories)&&state.categories.length?state.categories:['Smartphones','Feature Phones','Chargers','Accessories','Tempered Glass','Repair Services'];
+state.customers=Array.isArray(state.customers)?state.customers:[];
+state.bills=Array.isArray(state.bills)?state.bills:[];
+state.emi=Array.isArray(state.emi)?state.emi:[];
+state.collections=Array.isArray(state.collections)?state.collections:[];
+
+let cart=[];
+let currentInvoice=null;
+let quickCustomerFromBilling=false;
+
+function save(){
+ let persisted=safeSave(state);
+ refreshAll();
+ if(currentUser&&!isApplyingCloud)syncToCloud(false);
+ if(!persisted)toast('Local storage is blocked in this browser mode. Export JSON backup to keep your data.');
+}
+function toast(msg){
+ let t=document.getElementById('toast');
+ t.textContent=msg;
+ t.style.display='block';
+ clearTimeout(window.toastTimer);
+ window.toastTimer=setTimeout(()=>t.style.display='none',2800);
+}
+
+const pageInfo={
+ dashboard:['Dashboard','Store overview and activity at a glance.'],
+ billing:['New Billing','Build a sale and generate a customer invoice.'],
+ sales:['Sales History','Review saved invoices and reprint.'],
+ products:['Products & IMEI','Manage catalog, IMEI 1, IMEI 2, and barcode.'],
+ inventory:['Inventory','Stock levels across the product catalog.'],
+ customers:['Customers','Customer records and purchase history.'],
+ emi:['EMI Manager','Installment accounts, schedules and pending balances.'],
+ collection:['EMI Collection','Record customer installment payments.'],
+ repair:['Repair Center','Create service line items for a bill.'],
+ reports:['Reports','Sales totals and business summary.'],
+ thankyou:['Thank You Cards','Personalized WhatsApp customer message.'],
+ settings:['Settings','Customize shop profile, invoice and POS preferences.'],
+ billPrintSection:['Invoice Preview','Generated invoice preview and print.']
+};
+
+function toggleSidebar(){document.body.classList.toggle('sidebar-open')}
+function closeSidebar(){document.body.classList.remove('sidebar-open')}
+function navigate(page){
+ closeSidebar();
+ let target=document.getElementById(page);
+ if(!target){toast('Section not available');return}
+ document.querySelectorAll('.section').forEach(s=>s.classList.remove('active'));
+ target.classList.add('active');
+ document.querySelectorAll('.nav button').forEach(b=>b.classList.toggle('active',b.dataset.page===page));
+ let [t,sub]=pageInfo[page]||['POS',''];
+ document.getElementById('pageTitle').textContent=t;
+ document.getElementById('pageSub').textContent=sub;
+ window.scrollTo(0,0);
+ refreshAll();
+}
+document.querySelectorAll('.nav button').forEach(b=>b.onclick=()=>navigate(b.dataset.page));
+
+function refreshAll(){
+ renderDashboard();
+ renderProductTiles();
+ renderProducts();
+ renderInventory();
+ renderSales();
+ renderCustomers();
+ renderEmi();
+ renderCollection();
+ renderReports();
+ updateSettingsPreview();
+ renderThankCard();
+ updateCustomerDatalist();
+}
+
+function table(headers,rows){
+ return '<div class="tablewrap"><table><thead><tr>'+headers.map(h=>`<th>${h}</th>`).join('')+'</tr></thead><tbody>'+rows.map(r=>'<tr>'+r.map(c=>`<td>${c??''}</td>`).join('')+'</tr>').join('')+'</tbody></table></div>';
+}
+
+function renderDashboard(){
+ const todayStr=new Date().toDateString();
+ document.getElementById('statSales').textContent=money(state.bills.filter(b=>new Date(b.date).toDateString()===todayStr).reduce((s,b)=>s+b.total,0));
+ document.getElementById('statDue').textContent=money(state.bills.reduce((s,b)=>s+b.due,0));
+ document.getElementById('statEmi').textContent=state.emi.filter(e=>e.status==='Active').length;
+ document.getElementById('statProducts').textContent=state.products.length;
+ let recent=state.bills.slice(-5).reverse();
+ document.getElementById('recentBills').innerHTML=recent.length
+  ? table(['Invoice','Customer','Date','Total','Action'],recent.map(b=>[esc(b.invoice),esc(b.customer||'Walk-in'),new Date(b.date).toLocaleDateString('en-IN'),money(b.total),`<button class="ghost small" onclick="viewBill('${b.id}')">View</button>`]))
+  : '<div class="empty">No bills yet. Create your first invoice.</div>';
+ let low=state.products.filter(p=>p.stock<=3);
+ document.getElementById('stockSnapshot').innerHTML=low.length
+  ? table(['Product','Category','Stock'],low.map(p=>[esc(p.name),esc(p.category),`<span class="tag ${p.stock<=0?'red':'orange'}">${p.stock} left</span>`]))
+  : '<div class="empty">All products have healthy stock levels.</div>';
+}
+
+function renderProductTiles(){
+ let q=(document.getElementById('productSearch')?.value||'').trim().toLowerCase();
+ let select=document.getElementById('categoryFilter');
+ let cat=select?select.value:'';
+ if(select){
+  const opts=['<option value="">All categories</option>'].concat(state.categories.map(c=>`<option value="${esc(c)}" ${c===cat?'selected':''}>${esc(c)}</option>`)).join('');
+  if(select.innerHTML!==opts)select.innerHTML=opts;
+ }
+ let found=state.products.filter(p=>(!q||[p.name,p.brand,p.barcode,p.imei,p.imei2,p.serial,p.modelNo,p.category].join(' ').toLowerCase().includes(q))&&(!cat||p.category===cat));
+ document.getElementById('productTiles').innerHTML=found.map(p=>{
+  const out=p.stock<=0;
+  const imeiHtml=[p.imei?`<span class="imei-badge">IMEI 1: ${esc(p.imei)}</span>`:'',p.imei2?`<span class="imei-badge">IMEI 2: ${esc(p.imei2)}</span>`:''].filter(Boolean).join('');
+  return `<button type="button" class="producttile" ${out?'disabled':''} onclick="addToCart('${p.id}')">
+   <b>${esc(p.name)}</b>
+   <span>${esc(p.category)} · ${out?'<b style="color:var(--danger);display:inline">Out of stock</b>':p.stock+' in stock'}</span>
+   ${imeiHtml?`<div style="margin:4px 0">${imeiHtml}</div>`:''}
+   <strong>${money(p.price)}</strong>
+  </button>`;
+ }).join('')||'<div class="empty">No products found</div>';
+}
+
+function updateCartImei(pid,field,val){
+ let c=cart.find(x=>x.id===pid);
+ if(c)c[field]=val.trim();
+}
+
+function renderCart(){
+ let subtotal=cart.reduce((s,c)=>s+c.price*c.qty,0);
+ let rawDisc=Number(document.getElementById('discount')?.value||0);
+ let discount=Math.max(0,isNaN(rawDisc)?0:rawDisc);
+ let total=Math.max(0,subtotal-discount);
+ let paidInput=document.getElementById('amountPaid')?.value;
+ let amt=paidInput===''||paidInput==null?total:Number(paidInput);
+ amt=Math.min(Math.max(isNaN(amt)?0:amt,0),total);
+
+ document.getElementById('cartCount').textContent=cart.reduce((s,c)=>s+c.qty,0)+' items';
+ document.getElementById('cartLines').innerHTML=cart.length?cart.map(c=>`
+  <div class="cartline">
+   <div style="flex:1;min-width:0">
+    <b>${esc(c.name)}</b>
+    <small>${money(c.price)} each${c.serial?` · SN: ${esc(c.serial)}`:''}</small>
+    <div class="cart-imei-inputs">
+     <input placeholder="IMEI 1" value="${esc(c.imei||'')}" oninput="updateCartImei('${c.id}','imei',this.value)">
+     <input placeholder="IMEI 2" value="${esc(c.imei2||'')}" oninput="updateCartImei('${c.id}','imei2',this.value)">
+    </div>
+   </div>
+   <div style="text-align:right;flex:0 0 auto">
+    <b>${money(c.price*c.qty)}</b>
+    <div style="margin-top:6px">
+     <button type="button" class="ghost small" onclick="qty('${c.id}',-1)">−</button>
+     <b>${c.qty}</b>
+     <button type="button" class="secondary small" onclick="qty('${c.id}',1)">+</button>
+     <button type="button" class="danger small" onclick="removeCart('${c.id}')">×</button>
+    </div>
+   </div>
+  </div>`).join(''):'<div class="empty">Cart is empty. Add products from the catalog.</div>';
+
+ document.getElementById('cartSubtotal').textContent=money(subtotal);
+ document.getElementById('cartDiscount').textContent=money(discount);
+ document.getElementById('cartTotal').textContent=money(total);
+ document.getElementById('cartPaid').textContent=money(amt);
+ document.getElementById('cartBalance').textContent=money(total-amt);
+}
+
+function addToCart(pid){
+ let p=state.products.find(x=>x.id===pid);
+ if(!p)return;
+ if(p.stock<=0){toast('This product is out of stock');return}
+ let c=cart.find(x=>x.id===pid);
+ if(c){
+  if(c.qty+1>p.stock){toast('Not enough stock available');return}
+  c.qty++;
+ }else{
+  cart.push({...p,qty:1});
+ }
+ renderCart();
+ toast('Added to bill');
+}
+
+function qty(pid,d){
+ let c=cart.find(x=>x.id===pid);
+ if(!c)return;
+ if(c.qty+d<=0){removeCart(pid);return}
+ let p=state.products.find(x=>x.id===pid);
+ if(d>0&&p&&c.qty+1>p.stock){toast('Not enough stock');return}
+ c.qty+=d;
+ renderCart();
+}
+function removeCart(pid){cart=cart.filter(x=>x.id!==pid);renderCart()}
+function clearCart(){
+ cart=[];
+ document.getElementById('amountPaid').value='';
+ document.getElementById('discount').value=0;
+ renderCart();
+}
+
+function updateCustomerDatalist(){
+ let dl=document.getElementById('customerNameList');
+ if(dl)dl.innerHTML=state.customers.map(c=>`<option value="${esc(c.name)}">${esc(c.phone)}</option>`).join('');
+}
+function autoFillCustomerByName(){
+ let name=document.getElementById('billCustomer').value.trim().toLowerCase();
+ let c=state.customers.find(x=>x.name.toLowerCase()===name);
+ if(c){
+  document.getElementById('billPhone').value=c.phone||'';
+  document.getElementById('billAddress').value=c.address||'';
+ }
+}
+function autoFillCustomerByPhone(){
+ let phone=document.getElementById('billPhone').value.trim();
+ if(phone.length<6)return;
+ let c=state.customers.find(x=>x.phone===phone);
+ if(c){
+  if(!document.getElementById('billCustomer').value.trim())document.getElementById('billCustomer').value=c.name||'';
+  if(!document.getElementById('billAddress').value.trim())document.getElementById('billAddress').value=c.address||'';
+ }
+}
+
+function nextInvoiceNumber(){
+ const prefix=state.settings.prefix||'SE';
+ const maxNum=state.bills.reduce((m,b)=>{
+  const match=String(b.invoice||'').match(/(\d+)$/);
+  return Math.max(m,match?Number(match[1]):0);
+ },0);
+ return prefix+'-'+String(maxNum+1).padStart(4,'0');
+}
+
+function checkout(){
+ if(!cart.length){toast('Add at least one product first');return}
+ for(const item of cart){
+  if(item.imei&&item.imei2&&item.imei===item.imei2){
+   toast(`IMEI 1 and IMEI 2 cannot be identical for ${item.name}`);
+   return;
+  }
+ }
+ let subtotal=cart.reduce((s,c)=>s+c.price*c.qty,0);
+ let discount=Math.max(0,Number(document.getElementById('discount').value||0));
+ if(discount>subtotal){toast('Discount cannot exceed subtotal');return}
+ let total=Math.max(0,subtotal-discount);
+ let rawPaid=document.getElementById('amountPaid').value;
+ let paid=rawPaid===''?total:Number(rawPaid);
+ paid=Math.max(0,Math.min(isNaN(paid)?0:paid,total));
+
+ let invoice=nextInvoiceNumber();
+ let customer=document.getElementById('billCustomer').value.trim();
+ let phone=document.getElementById('billPhone').value.trim();
+ let address=document.getElementById('billAddress').value.trim();
+ let buyerGst=document.getElementById('billBuyerGst').value.trim();
+
+ let bill={
+  id:id(),
+  invoice,
+  date:new Date().toISOString(),
+  customer,
+  phone,
+  address,
+  buyerGst,
+  items:cart.map(x=>({...x})),
+  subtotal,
+  discount,
+  total,
+  paid,
+  due:Math.round((total-paid)*100)/100,
+  method:document.getElementById('payMethod').value
+ };
+
+ if(customer&&phone){
+  let existing=state.customers.find(c=>c.phone===phone);
+  if(!existing){
+   state.customers.push({id:id(),name:customer,phone,address});
+  }else if(address&&!existing.address){
+   existing.address=address;
+  }
+ }
+
+ state.bills.push(bill);
+ bill.items.forEach(it=>{
+  let p=state.products.find(x=>x.id===it.id);
+  if(p)p.stock=Math.max(0,p.stock-it.qty);
+ });
+
+ currentInvoice=bill;
+ save();
+ showInvoice(bill);
+ clearCart();
+ document.getElementById('billCustomer').value='';
+ document.getElementById('billPhone').value='';
+ document.getElementById('billAddress').value='';
+ document.getElementById('billBuyerGst').value='';
+ navigate('billPrintSection');
+ toast('Invoice saved successfully');
+}
+
+function showInvoice(b){
+ let s=state.settings;
+ document.body.classList.toggle('paper-a5',s.paper==='A5');
+ let custRecord=b.phone?state.customers.find(c=>c.phone===b.phone):null;
+ let custAddr=b.address||(custRecord?custRecord.address:'');
+
+ let rows=b.items.map((it,i)=>{
+  const details=[
+   it.modelNo?`Model No.: ${esc(it.modelNo)}`:'',
+   it.imei?`IMEI No. (1): ${esc(it.imei)}`:'',
+   it.imei2?`IMEI No. (2): ${esc(it.imei2)}`:'',
+   it.serial?`Serial No. (SN): ${esc(it.serial)}`:'',
+   it.batteryNo?`Battery No.: ${esc(it.batteryNo)}`:'',
+   it.chargerNo?`Charger No.: ${esc(it.chargerNo)}`:'',
+   it.ram?`RAM: ${esc(it.ram)}`:'',
+   it.storage?`Storage: ${esc(it.storage)}`:'',
+   it.colour?`Colour: ${esc(it.colour)}`:'',
+   it.battery?`Battery: ${esc(it.battery)}`:'',
+   it.warranty?`Warranty: ${esc(it.warranty)}`:'',
+   it.barcode?`Barcode: ${esc(it.barcode)}`:''
+  ].filter(Boolean).join('<br>');
+  return `<tr>
+   <td class="sl">${i+1}</td>
+   <td><b class="itemname">${esc(it.name)}</b>${details?`<div class="deviceinfo">${details}</div>`:''}</td>
+   <td class="num">${it.qty}</td>
+   <td class="num">${money(it.price)}</td>
+   <td class="num amount">${money(it.price*it.qty)}</td>
+  </tr>`;
+ }).join('');
+
+ let qrUrl=(s.qrUrl||'').trim();
+ let qrImg=qrUrl
+  ? `<img class="invoice-qr" src="https://api.qrserver.com/v1/create-qr-code/?size=180x180&margin=8&data=${encodeURIComponent(qrUrl)}" alt="Scan QR code">`
+  : `<div class="qr-placeholder">Set website / Google review URL in Settings</div>`;
+
+ document.getElementById('invoicePaper').innerHTML=`
+ <div class="invoice-topline"></div>
+ <div class="invoice-head">
+  <div>
+   <div class="invoice-brand">
+    <div class="invoice-monogram">${esc(initials(s.shop||'SUN ENTERPRISE'))}</div>
+    <div>
+     <div class="invoice-shop">${esc(s.shop||'SUN ENTERPRISE')}</div>
+     <div class="invoice-prop">Proprietor: ${esc(s.owner||'Abdus Salam')}</div>
+    </div>
+   </div>
+   <div class="invoice-address">${esc(s.address||'')}</div>
+   <div class="invoice-contact">Contact: ${esc(s.phone||'')}</div>
+   ${s.gst?`<div class="invoice-gst">GSTIN: ${esc(s.gst)}</div>`:''}
+  </div>
+  <div class="invoice-titlebox">
+   <strong>${esc(s.invoiceTitle||'TAX INVOICE')}</strong>
+   <div>
+    <b>Invoice No.:</b> ${esc(b.invoice)}<br>
+    <b>Date:</b> ${new Date(b.date).toLocaleDateString('en-IN')}<br>
+    <b>Time:</b> ${new Date(b.date).toLocaleTimeString('en-IN')}<br>
+    <b>Payment:</b> ${esc(b.method)}
+   </div>
+  </div>
+ </div>
+ <div class="invoice-parties">
+  <div class="invoice-party">
+   <h4>Bill To / Customer Details</h4>
+   <p><b>${esc(b.customer||'Walk-in Customer')}</b></p>
+   <p>${esc(b.phone||'—')}</p>
+   <p>Address: ${custAddr?esc(custAddr):'______________________________'}</p>
+  </div>
+  <div class="invoice-party">
+   <h4>Invoice Information</h4>
+   <p>Place of Supply: West Bengal</p>
+   <p>Buyer GSTIN: ${b.buyerGst?esc(b.buyerGst):'__________________________'}</p>
+   <p>Payment Status: <b>${b.due>0?'PARTIALLY PAID / DUE':'PAID'}</b></p>
+  </div>
+ </div>
+ <table class="invoice-table">
+  <thead><tr><th>#</th><th style="width:54%">Description / Device Details</th><th>Qty.</th><th>Rate</th><th>Amount (₹)</th></tr></thead>
+  <tbody>${rows}</tbody>
+ </table>
+ <div class="invoice-bottom">
+  <div class="invoice-terms">
+   <strong>TERMS &amp; CONDITIONS</strong><br>${esc(s.terms||'').replace(/\n/g,'<br>')}
+   <div style="margin-top:12px"><b>Customer Note:</b> ____________________________________________</div>
+  </div>
+  <div class="invoice-totals">
+   <div class="totalrow"><span>Subtotal</span><b>${money(b.subtotal)}</b></div>
+   <div class="totalrow"><span>Discount</span><b>${money(b.discount)}</b></div>
+   <div class="totalrow"><span>CGST</span><b>—</b></div>
+   <div class="totalrow"><span>SGST</span><b>—</b></div>
+   <div class="totalrow grand"><span>Grand Total</span><b>${money(b.total)}</b></div>
+   <div class="totalrow"><span>Amount Paid</span><b>${money(b.paid)}</b></div>
+   <div class="totalrow balance"><span>Balance Due</span><b>${money(b.due)}</b></div>
+  </div>
+ </div>
+ <div class="invoice-signatures">
+  <span>Customer Signature</span>
+  <span>For ${esc(s.shop||'SUN ENTERPRISE')}<br>Authorized Signature</span>
+ </div>
+ <div class="invoice-qr-area">
+  ${qrImg}
+  <div class="qr-copy">
+   <strong>${esc(s.qrLabel||'SCAN TO VISIT / REVIEW')}</strong>
+   Scan with your phone camera to open our website or Google review page.<br>
+   <small>${esc(qrUrl)}</small>
+  </div>
+ </div>
+ ${s.dealerLine?`<div class="invoice-dealer">${esc(s.dealerLine)}</div>`:''}
+ <div class="invoice-thanks">${esc(s.footer||'Thank you for choosing SUN ENTERPRISE!')}</div>`;
+}
+
+function renderProducts(){
+ let q=(document.getElementById('catalogSearch')?.value||'').trim().toLowerCase();
+ let ps=state.products.filter(p=>!q||[p.name,p.category,p.brand,p.barcode,p.imei,p.imei2,p.serial,p.modelNo].join(' ').toLowerCase().includes(q));
+ document.getElementById('productsTable').innerHTML=ps.length?table(
+  ['Product','Category','IMEI 1 / IMEI 2','Barcode','Price','Stock','Specs','Action'],
+  ps.map(p=>{
+   const imeiCell=[
+    p.imei?`<span class="imei-badge">1: ${esc(p.imei)}</span>`:'',
+    p.imei2?`<span class="imei-badge">2: ${esc(p.imei2)}</span>`:''
+   ].filter(Boolean).join('<br>')||'—';
+   return [
+    `<b>${esc(p.name)}</b><br><span class="muted">${esc([p.brand,p.modelNo].filter(Boolean).join(' · '))}</span>`,
+    esc(p.category),
+    imeiCell,
+    esc(p.barcode||'—'),
+    money(p.price),
+    `<span class="tag ${p.stock<=0?'red':p.stock<=3?'orange':'green'}">${p.stock}</span>`,
+    esc([p.ram,p.storage,p.colour].filter(Boolean).join(' / ')||'—'),
+    `<button class="ghost small" onclick="editProduct('${p.id}')">Edit</button> <button class="danger small" onclick="deleteProduct('${p.id}')">Delete</button>`
+   ];
+  })
+ ):'<div class="empty">No matching products found.</div>';
+}
+
+function renderInventory(){
+ document.getElementById('inventoryTable').innerHTML=table(
+  ['Product','Category','Stock','Purchase Value','Retail Value','Status'],
+  state.products.map(p=>[
+   esc(p.name),
+   esc(p.category),
+   p.stock,
+   money(p.cost*p.stock),
+   money(p.price*p.stock),
+   p.stock<=0?'<span class="tag red">Out of stock</span>':p.stock<=3?'<span class="tag orange">Low stock</span>':'<span class="tag green">Available</span>'
+  ])
+ );
+}
+
+function renderSales(){
+ let q=(document.getElementById('salesSearch')?.value||'').trim().toLowerCase();
+ let bs=state.bills.slice().reverse().filter(b=>{
+  const itemImeis=(b.items||[]).map(it=>[it.name,it.imei,it.imei2,it.serial].join(' ')).join(' ');
+  return [b.invoice,b.customer,b.phone,itemImeis].join(' ').toLowerCase().includes(q);
+ });
+ document.getElementById('salesTable').innerHTML=bs.length?table(
+  ['Invoice','Customer','Date','Total','Paid','Due','Action'],
+  bs.map(b=>[
+   `<b>${esc(b.invoice)}</b>`,
+   esc(b.customer||'Walk-in')+(b.phone?`<br><span class="muted">${esc(b.phone)}</span>`:''),
+   new Date(b.date).toLocaleDateString('en-IN'),
+   money(b.total),
+   money(b.paid),
+   b.due>0?`<span class="tag orange">${money(b.due)}</span>`:money(0),
+   `<button class="ghost small" onclick="viewBill('${b.id}')">View</button> <button class="secondary small" onclick="reprint('${b.id}')">Print</button>`
+  ])
+ ):'<div class="empty">No invoices yet.</div>';
+}
+
+function viewBill(bid){
+ let b=state.bills.find(x=>x.id===bid);
+ if(!b)return;
+ currentInvoice=b;
+ showInvoice(b);
+ navigate('billPrintSection');
+}
+function reprint(bid){
+ let b=state.bills.find(x=>x.id===bid);
+ if(!b)return;
+ currentInvoice=b;
+ showInvoice(b);
+ navigate('billPrintSection');
+ setTimeout(()=>window.print(),300);
+}
+
+function renderCustomers(){
+ let q=(document.getElementById('customerSearch')?.value||'').trim().toLowerCase();
+ let cs=state.customers.filter(c=>[c.name,c.phone,c.address].join(' ').toLowerCase().includes(q));
+ document.getElementById('customersTable').innerHTML=cs.length?table(
+  ['Customer','Phone','Address','Bills','Purchase Total'],
+  cs.map(c=>{
+   let bs=state.bills.filter(b=>b.phone===c.phone);
+   return [esc(c.name),esc(c.phone),esc(c.address||'—'),bs.length,money(bs.reduce((s,b)=>s+b.total,0))];
+  })
+ ):'<div class="empty">No customers added yet. Customers are also created automatically from bills.</div>';
+}
+
+function renderEmi(){
+ let active=state.emi.filter(e=>e.status==='Active');
+ let today=new Date().toISOString().slice(0,10);
+ let outstanding=active.reduce((s,e)=>s+e.balance,0);
+ let dueToday=active.reduce((s,e)=>s+e.schedule.filter(x=>x.status==='Pending'&&x.date===today).reduce((a,x)=>a+x.amount,0),0);
+ let overdue=active.reduce((s,e)=>s+e.schedule.filter(x=>x.status==='Pending'&&x.date<today).reduce((a,x)=>a+x.amount,0),0);
+ document.getElementById('emiActive').textContent=active.length;
+ document.getElementById('emiOutstanding').textContent=money(outstanding);
+ document.getElementById('emiDueToday').textContent=money(dueToday);
+ document.getElementById('emiOverdue').textContent=money(overdue);
+ document.getElementById('emiTable').innerHTML=state.emi.length?table(
+  ['Customer','Phone','Invoice / Product','Plan','Next Due','Balance','Status','Action'],
+  state.emi.map(e=>[
+   esc(e.customer),
+   esc(e.phone),
+   esc(e.product),
+   `${money(e.monthly)} × ${e.months}`,
+   esc(e.schedule.find(x=>x.status==='Pending')?.date||'Completed'),
+   money(e.balance),
+   e.status==='Active'?'<span class="tag green">Active</span>':'<span class="tag">Completed</span>',
+   `<button class="secondary small" onclick="emiDetails('${e.id}')">Details</button>`
+  ])
+ ):'<div class="empty">No EMI plans created.</div>';
+}
+
+function renderCollection(){
+ let q=(document.getElementById('collectSearch')?.value||'').trim().toLowerCase();
+ let active=state.emi.filter(e=>e.status==='Active'&&[e.customer,e.phone,e.product].join(' ').toLowerCase().includes(q));
+ document.getElementById('collectionTable').innerHTML=active.length?table(
+  ['Customer','Phone','Product','Next installment','Balance','Collect'],
+  active.map(e=>{
+   let next=e.schedule.find(x=>x.status==='Pending');
+   return [
+    esc(e.customer),
+    esc(e.phone),
+    esc(e.product),
+    next?`${next.date} · ${money(next.amount)}`:'No pending',
+    money(e.balance),
+    next?`<button onclick="collectFor('${e.id}',${next.n})" class="small">Collect payment</button>`:'—'
+   ];
+  })
+ ):'<div class="empty">No active EMI accounts.</div>';
+}
+
+function renderReports(){
+ let total=state.bills.reduce((s,b)=>s+b.total,0);
+ let paid=state.bills.reduce((s,b)=>s+b.paid,0);
+ let due=state.bills.reduce((s,b)=>s+b.due,0);
+ document.getElementById('reportCount').textContent=state.bills.length;
+ document.getElementById('reportBilled').textContent=money(total);
+ document.getElementById('reportCollected').textContent=money(paid);
+ document.getElementById('reportDue').textContent=money(due);
+ document.getElementById('reportSummary').innerHTML=table(
+  ['Metric','Amount'],
+  [
+   ['Gross sales',money(total)],
+   ['Payments received (Invoices)',money(paid)],
+   ['Outstanding invoices',money(due)],
+   ['Product stock units',state.products.reduce((s,p)=>s+p.stock,0)],
+   ['Total EMI collected',money(state.collections.reduce((s,c)=>s+c.amount,0))],
+   ['Total EMI balance',money(state.emi.reduce((s,e)=>s+e.balance,0))]
+  ]
+ );
+}
+
+function openModal(title,html){
+ document.getElementById('modalTitle').textContent=title;
+ document.getElementById('modalContent').innerHTML=html;
+ document.getElementById('modalBack').style.display='flex';
+}
+function closeModal(){document.getElementById('modalBack').style.display='none'}
+document.addEventListener('keydown',e=>{if(e.key==='Escape'){closeSidebar();closeModal()}});
+
+function openProductModal(prod=null){
+ let x=prod||{};
+ openModal(prod?'Edit Product':'Add Product',`
+ <form onsubmit="saveProductForm(event,'${x.id||''}')">
+  <div class="formgrid">
+   <div class="field"><label>Category</label><select name="category" required>${state.categories.map(c=>`<option value="${esc(c)}" ${x.category===c?'selected':''}>${esc(c)}</option>`).join('')}</select></div>
+   <div class="field"><label>Product name</label><input name="name" value="${esc(x.name||'')}" placeholder="e.g. Samsung Galaxy A56" required></div>
+   <div class="field"><label>Brand</label><input name="brand" value="${esc(x.brand||'')}" placeholder="e.g. Samsung, Vivo, Apple"></div>
+   <div class="field"><label>Model / Model No.</label><input name="modelNo" value="${esc(x.modelNo||'')}" placeholder="e.g. SM-A566B"></div>
+   <div class="field"><label>Sale price (₹)</label><input name="price" type="number" min="0" step="0.01" value="${x.price??0}" required></div>
+   <div class="field"><label>Purchase cost (₹)</label><input name="cost" type="number" min="0" step="0.01" value="${x.cost??0}"></div>
+   <div class="field"><label>Stock quantity</label><input name="stock" type="number" min="0" value="${x.stock??1}" required></div>
+   <div class="field"><label>Barcode / SKU</label><input name="barcode" value="${esc(x.barcode||'')}"></div>
+
+   <div class="imei-section-box">
+    <h4>Device Identity (IMEI 1 &amp; IMEI 2)</h4>
+    <div class="formgrid">
+     <div class="field"><label>IMEI 1</label><input name="imei" maxlength="20" placeholder="Enter 15-digit IMEI 1" value="${esc(x.imei||'')}"></div>
+     <div class="field"><label>IMEI 2</label><input name="imei2" maxlength="20" placeholder="Enter 15-digit IMEI 2 (Dual SIM)" value="${esc(x.imei2||'')}"></div>
+     <div class="field"><label>Serial Number (SN)</label><input name="serial" value="${esc(x.serial||'')}" placeholder="Device serial number"></div>
+     <div class="field"><label>Battery Number</label><input name="batteryNo" value="${esc(x.batteryNo||'')}"></div>
+     <div class="field full"><label>Charger Number</label><input name="chargerNo" value="${esc(x.chargerNo||'')}"></div>
+    </div>
+   </div>
+
+   <div class="field"><label>RAM</label><input name="ram" value="${esc(x.ram||'')}" placeholder="e.g. 8GB"></div>
+   <div class="field"><label>Storage</label><input name="storage" value="${esc(x.storage||'')}" placeholder="e.g. 128GB"></div>
+   <div class="field"><label>Colour</label><input name="colour" value="${esc(x.colour||'')}" placeholder="e.g. Black"></div>
+   <div class="field"><label>Battery</label><input name="battery" value="${esc(x.battery||'')}" placeholder="e.g. 5000mAh"></div>
+   <div class="field full"><label>Warranty</label><input name="warranty" value="${esc(x.warranty||'')}" placeholder="e.g. 1 Year Manufacturer Warranty"></div>
+  </div>
+  <div style="margin-top:14px;display:flex;gap:8px">
+   <button type="submit">Save Product</button>
+   <button type="button" class="ghost" onclick="closeModal()">Cancel</button>
+  </div>
+ </form>`);
+}
+
+function saveProductForm(e,pid){
+ e.preventDefault();
+ let obj=Object.fromEntries(new FormData(e.target).entries());
+ obj.name=(obj.name||'').trim();
+ obj.imei=(obj.imei||'').trim();
+ obj.imei2=(obj.imei2||'').trim();
+ obj.price=Math.max(0,Number(obj.price||0));
+ obj.cost=Math.max(0,Number(obj.cost||0));
+ obj.stock=Math.max(0,Math.floor(Number(obj.stock||0)));
+ if(obj.imei&&obj.imei2&&obj.imei===obj.imei2){
+  toast('IMEI 1 and IMEI 2 cannot be the same');
+  return;
+ }
+ if(pid){
+  let existing=state.products.find(p=>p.id===pid);
+  if(existing)Object.assign(existing,obj);
+ }else{
+  obj.id=id();
+  state.products.push(obj);
+ }
+ closeModal();
+ save();
+ toast('Product saved');
+}
+
+function editProduct(pid){openProductModal(state.products.find(p=>p.id===pid))}
+function deleteProduct(pid){
+ if(confirm('Delete this product?')){
+  state.products=state.products.filter(p=>p.id!==pid);
+  cart=cart.filter(c=>c.id!==pid);
+  renderCart();
+  save();
+  toast('Product deleted');
+ }
+}
+
+function openCategoryModal(){
+ openModal('Manage Categories',`
+  <div class="toolbar"><input id="newCat" placeholder="Enter new category"><button type="button" onclick="addCategory()">Add category</button></div>
+  <div>${state.categories.map((c,idx)=>`<div class="cartline"><b>${esc(c)}</b><button type="button" class="danger small" onclick="deleteCategory(${idx})">Remove</button></div>`).join('')}</div>`);
+}
+function addCategory(){
+ let c=document.getElementById('newCat').value.trim();
+ if(!c)return;
+ if(state.categories.some(x=>x.toLowerCase()===c.toLowerCase())){toast('Category already exists');return}
+ state.categories.push(c);
+ save();
+ openCategoryModal();
+ toast('Category added');
+}
+function deleteCategory(idx){
+ let c=state.categories[idx];
+ if(c==null)return;
+ if(state.products.some(p=>p.category===c)){toast('Category has products; change their category first');return}
+ state.categories.splice(idx,1);
+ save();
+ openCategoryModal();
+ toast('Category removed');
+}
+
+function openCustomerModal(fromBilling=false){
+ quickCustomerFromBilling=fromBilling;
+ openModal('Add Customer',`
+  <form onsubmit="saveCustomer(event)">
+   <div class="formgrid">
+    <div class="field"><label>Name</label><input name="name" required></div>
+    <div class="field"><label>Phone</label><input name="phone" required></div>
+    <div class="field full"><label>Address</label><textarea name="address" rows="2"></textarea></div>
+   </div>
+   <button style="margin-top:14px">Save Customer</button>
+  </form>`);
+}
+function quickCustomer(){openCustomerModal(true)}
+function saveCustomer(e){
+ e.preventDefault();
+ let obj=Object.fromEntries(new FormData(e.target).entries());
+ obj.name=obj.name.trim();
+ obj.phone=obj.phone.trim();
+ obj.address=(obj.address||'').trim();
+ if(state.customers.some(c=>c.phone===obj.phone)){toast('Phone number already exists');return}
+ obj.id=id();
+ state.customers.push(obj);
+ if(quickCustomerFromBilling){
+  document.getElementById('billCustomer').value=obj.name;
+  document.getElementById('billPhone').value=obj.phone;
+  document.getElementById('billAddress').value=obj.address;
+  quickCustomerFromBilling=false;
+ }
+ closeModal();
+ save();
+ toast('Customer saved');
+}
+
+function openEmiModal(){
+ let custList=state.customers.map(c=>`<option value="${esc(c.name)}">${esc(c.phone)}</option>`).join('');
+ openModal('Create EMI Account',`
+  <form onsubmit="saveEmi(event)">
+   <div class="formgrid">
+    <div class="field"><label>Customer name</label><input name="customer" list="emiCustList" oninput="fillEmiPhone(this)" required><datalist id="emiCustList">${custList}</datalist></div>
+    <div class="field"><label>Phone</label><input name="phone" id="emiPhoneInput" required></div>
+    <div class="field full"><label>Product / Invoice / IMEI details</label><input name="product" placeholder="Device / invoice / IMEI" required></div>
+    <div class="field"><label>Total price / financed amount (₹)</label><input name="amount" type="number" min="1" required></div>
+    <div class="field"><label>Down payment (₹)</label><input name="down" type="number" min="0" value="0"></div>
+    <div class="field"><label>Installment count (months)</label><input name="months" type="number" min="1" max="60" value="6" required></div>
+    <div class="field"><label>Monthly due date (day 1-28)</label><input name="day" type="number" min="1" max="28" value="5" required></div>
+    <div class="field"><label>Start date</label><input name="start" type="date" value="${new Date().toISOString().slice(0,10)}" required></div>
+    <div class="field"><label>Interest / extra (₹ total)</label><input name="interest" type="number" min="0" value="0"></div>
+   </div>
+   <button style="margin-top:14px">Create EMI Schedule</button>
+  </form>`);
+}
+function fillEmiPhone(inp){
+ let c=state.customers.find(x=>x.name.toLowerCase()===inp.value.trim().toLowerCase());
+ if(c){let p=document.getElementById('emiPhoneInput');if(p)p.value=c.phone}
+}
+
+function saveEmi(e){
+ e.preventDefault();
+ let d=Object.fromEntries(new FormData(e.target).entries());
+ let principal=Math.round((Number(d.amount)-Number(d.down||0)+Number(d.interest||0))*100)/100;
+ if(principal<=0){toast('Financed balance must be greater than ₹0');return}
+ let months=Math.max(1,Math.floor(Number(d.months)));
+ let baseMonthly=Math.floor((principal/months)*100)/100;
+ let start=new Date(d.start+'T12:00:00');
+ let day=Math.min(28,Math.max(1,Number(d.day)));
+ let schedule=[];
+ let allocated=0;
+ for(let i=1;i<=months;i++){
+  let dt=new Date(start.getFullYear(),start.getMonth()+i,day,12,0,0);
+  let instAmt=i===months?Math.round((principal-allocated)*100)/100:baseMonthly;
+  allocated=Math.round((allocated+instAmt)*100)/100;
+  schedule.push({n:i,date:dt.toISOString().slice(0,10),amount:instAmt,status:'Pending'});
+ }
+ state.emi.push({
+  id:id(),
+  customer:d.customer.trim(),
+  phone:d.phone.trim(),
+  product:d.product.trim(),
+  amount:principal,
+  monthly:Math.round((principal/months)*100)/100,
+  months,
+  balance:principal,
+  status:'Active',
+  schedule
+ });
+ closeModal();
+ save();
+ toast('EMI plan created');
+}
+
+function emiDetails(eid){
+ let e=state.emi.find(x=>x.id===eid);
+ if(!e)return;
+ openModal('EMI Schedule — '+e.customer,`
+  <p><b>${esc(e.product)}</b> · Balance ${money(e.balance)}</p>
+  ${table(['#','Due date','Amount','Status','Action'],e.schedule.map(x=>[
+   x.n,
+   x.date,
+   money(x.amount),
+   x.status==='Paid'?'<span class="tag green">Paid</span>':'<span class="tag orange">Pending</span>',
+   x.status==='Pending'?`<button class="small" onclick="collectInstallment('${e.id}',${x.n})">Collect</button>`:(x.paidDate||'—')
+  ]))}`);
+}
+
+function collectFor(eid,installmentNo=null){
+ let e=state.emi.find(x=>x.id===eid);
+ if(!e)return;
+ let inst=installmentNo!=null
+  ? e.schedule.find(x=>x.n===installmentNo&&x.status==='Pending')
+  : e.schedule.find(x=>x.status==='Pending');
+ if(!inst)return;
+ const defaultAmt=Math.min(inst.amount,e.balance);
+ openModal('Collect EMI',`
+  <form onsubmit="submitCollection(event,'${eid}',${inst.n})">
+   <p>Customer: <b>${esc(e.customer)}</b><br>Installment #${inst.n} (${inst.date}) · ${money(inst.amount)}<br>Remaining Balance: <b>${money(e.balance)}</b></p>
+   <div class="formgrid">
+    <div class="field"><label>Amount received (₹)</label><input name="amount" type="number" step="0.01" value="${defaultAmt}" min="1" max="${e.balance}" required></div>
+    <div class="field"><label>Payment method</label><select name="method"><option>Cash</option><option>UPI</option><option>Bank</option><option>Card</option></select></div>
+    <div class="field"><label>Collection date</label><input name="date" type="date" value="${new Date().toISOString().slice(0,10)}" required></div>
+   </div>
+   <button style="margin-top:12px">Confirm Collection</button>
+  </form>`);
+}
+function collectInstallment(eid,n){closeModal();collectFor(eid,n)}
+function submitCollection(e,eid,n){
+ e.preventDefault();
+ let d=Object.fromEntries(new FormData(e.target).entries());
+ let emi=state.emi.find(x=>x.id===eid);
+ let inst=emi?.schedule.find(x=>x.n===n&&x.status==='Pending');
+ let amt=Number(d.amount);
+ if(!inst||amt<=0||amt>emi.balance+0.01){toast('Please enter a valid amount');return}
+ if(amt+0.01>=inst.amount){
+  inst.status='Paid';
+  inst.paidAmount=amt;
+  inst.paidDate=d.date;
+  inst.method=d.method;
+ }else{
+  inst.amount=Math.round((inst.amount-amt)*100)/100;
+ }
+ emi.balance=Math.max(0,Math.round((emi.balance-amt)*100)/100);
+ if(emi.balance<0.01){
+  emi.balance=0;
+  emi.status='Completed';
+  emi.schedule.forEach(s=>{if(s.status==='Pending'){s.status='Paid';s.paidDate=d.date;s.method=d.method}});
+ }
+ state.collections.push({id:id(),emiId:eid,customer:emi.customer,phone:emi.phone,amount:amt,date:d.date,method:d.method,installment:n});
+ closeModal();
+ save();
+ toast('Payment recorded');
+}
+
+function addRepairToCart(){
+ let name=document.getElementById('repairName').value.trim();
+ let phone=document.getElementById('repairPhone').value.trim();
+ let device=document.getElementById('repairDevice').value.trim();
+ let imei=document.getElementById('repairImei').value.trim();
+ let service=document.getElementById('repairService').value.trim();
+ let parts=Math.max(0,Number(document.getElementById('repairParts').value||0));
+ let labour=Math.max(0,Number(document.getElementById('repairLabour').value||0));
+ let total=parts+labour;
+ if(!service){toast('Enter repair/service description');return}
+ cart.push({id:'repair-'+id(),name:`Repair: ${device||'Device'} — ${service}`,category:'Repair Services',price:total,cost:0,stock:99,qty:1,imei,imei2:'',serial:'',ram:'',storage:'',colour:'',battery:'',warranty:'Service warranty'});
+ if(name)document.getElementById('billCustomer').value=name;
+ if(phone)document.getElementById('billPhone').value=phone;
+ ['repairName','repairPhone','repairDevice','repairImei','repairService'].forEach(k=>document.getElementById(k).value='');
+ document.getElementById('repairParts').value=0;
+ document.getElementById('repairLabour').value=0;
+ navigate('billing');
+ renderCart();
+ toast('Repair item added to bill');
+}
+
+function updateSettingsPreview(){
+ let s=state.settings;
+ let init=initials(s.shop||'SUN ENTERPRISE');
+ document.getElementById('sideShop').textContent=s.shop||'SUN ENTERPRISE';
+ document.getElementById('sideLogo').textContent=init;
+ document.getElementById('topAvatar').textContent=init;
+ const map={setShop:'shop',setOwner:'owner',setPhone:'phone',setAddress:'address',setGst:'gst',setPrefix:'prefix',setAccent:'accent',setFooter:'footer',setPaper:'paper',setInvoiceTitle:'invoiceTitle',setQrUrl:'qrUrl',setQrLabel:'qrLabel',setTerms:'terms',setDealerLine:'dealerLine'};
+ Object.keys(map).forEach(k=>{
+  let el=document.getElementById(k);
+  if(el&&document.activeElement!==el)el.value=s[map[k]]||'';
+ });
+ document.documentElement.style.setProperty('--accent',s.accent||'#174A78');
+ document.body.classList.toggle('paper-a5',s.paper==='A5');
+ document.getElementById('previewShop').textContent=s.shop||'SUN ENTERPRISE';
+ document.getElementById('previewAddress').textContent=s.address||'Shop address';
+ document.getElementById('previewInvoiceTitle').textContent=s.invoiceTitle||'TAX INVOICE';
+ document.getElementById('previewFooter').textContent=s.footer||'';
+}
+
+function saveSettings(){
+ state.settings={
+  ...state.settings,
+  shop:document.getElementById('setShop').value.trim()||'SUN ENTERPRISE',
+  owner:document.getElementById('setOwner').value.trim(),
+  phone:document.getElementById('setPhone').value.trim(),
+  address:document.getElementById('setAddress').value.trim(),
+  gst:document.getElementById('setGst').value.trim(),
+  prefix:document.getElementById('setPrefix').value.trim()||'SE',
+  accent:document.getElementById('setAccent').value||'#174A78',
+  footer:document.getElementById('setFooter').value.trim(),
+  paper:document.getElementById('setPaper').value,
+  invoiceTitle:document.getElementById('setInvoiceTitle').value.trim()||'TAX INVOICE',
+  qrUrl:document.getElementById('setQrUrl').value.trim(),
+  qrLabel:document.getElementById('setQrLabel').value.trim(),
+  terms:document.getElementById('setTerms').value.trim(),
+  dealerLine:document.getElementById('setDealerLine').value.trim()
+ };
+ save();
+ if(currentInvoice)showInvoice(currentInvoice);
+ toast('Settings saved');
+}
+
+function renderThankCard(){
+ let n=document.getElementById('tyName')?.value||'Customer';
+ let msg=document.getElementById('tyMessage')?.value||'Thank you for shopping with us!';
+ document.getElementById('tyPreviewShop').textContent=state.settings.shop||'SUN ENTERPRISE';
+ document.getElementById('tyPreviewName').textContent='Dear '+n+',';
+ document.getElementById('tyPreviewMsg').textContent=msg;
+}
+
+function shareThankYou(){
+ let n=document.getElementById('tyName').value||'Customer';
+ let msg=document.getElementById('tyMessage').value;
+ let phone=document.getElementById('billPhone').value||prompt('Customer WhatsApp number (with country code, e.g. 919876543210):');
+ if(!phone)return;
+ let digits=phone.replace(/\D/g,'');
+ if(digits.length===10)digits='91'+digits;
+ let txt=`Dear ${n},\n\n${msg}\n\nRegards,\n${state.settings.shop}`;
+ window.open('https://wa.me/'+digits+'?text='+encodeURIComponent(txt),'_blank');
+}
+
+function downloadThankCard(){
+ const canvas=document.createElement('canvas');
+ canvas.width=900;canvas.height=560;
+ const ctx=canvas.getContext('2d');
+ const grad=ctx.createLinearGradient(0,0,900,560);
+ grad.addColorStop(0,'#1c2e4d');grad.addColorStop(1,'#2e62ba');
+ ctx.fillStyle=grad;
+ ctx.fillRect(0,0,900,560);
+ ctx.fillStyle='#ffffff';
+ ctx.textAlign='center';
+ ctx.font='bold 46px Arial';
+ ctx.fillText('♥',450,95);
+ ctx.font='bold 40px Arial';
+ ctx.fillText(state.settings.shop||'SUN ENTERPRISE',450,155);
+ ctx.font='bold 26px Arial';
+ ctx.fillText(document.getElementById('tyPreviewName').textContent,450,215);
+ ctx.font='22px Arial';
+ const words=document.getElementById('tyPreviewMsg').textContent.split(/\s+/);
+ let line='',y=275;
+ for(const w of words){
+  const test=line?line+' '+w:w;
+  if(ctx.measureText(test).width>740){
+   ctx.fillText(line,450,y);line=w;y+=34;
+  }else line=test;
+ }
+ if(line)ctx.fillText(line,450,y);
+ ctx.font='18px Arial';
+ ctx.fillStyle='rgba(255,255,255,0.85)';
+ ctx.fillText('We appreciate your trust and support.',450,505);
+ const a=document.createElement('a');
+ a.href=canvas.toDataURL('image/png');
+ a.download='thank-you-card.png';
+ a.click();
+}
+
+function exportData(){
+ let blob=new Blob([JSON.stringify(state,null,2)],{type:'application/json'});
+ let a=document.createElement('a');
+ a.href=URL.createObjectURL(blob);
+ a.download='sun-enterprise-pos-backup.json';
+ a.click();
+ URL.revokeObjectURL(a.href);
+}
+
+function importData(e){
+ const file=e.target.files?.[0];
+ if(!file)return;
+ const reader=new FileReader();
+ reader.onload=()=>{
+  try{
+   const parsed=JSON.parse(reader.result);
+   if(!parsed||!Array.isArray(parsed.products))throw new Error('Invalid backup');
+   state={...state,...parsed,settings:{...defaultSettings,...(parsed.settings||{})}};
+   save();
+   toast('Backup restored successfully');
+  }catch(err){
+   toast('Invalid JSON backup file');
+  }
+ };
+ reader.readAsText(file);
+ e.target.value='';
+}
+
+function resetDemo(){
+ if(confirm('Reset all local POS data and start over?')){
+  safeClear();
+  location.reload();
+ }
+}
+
+function printInvoice(){window.print()}
+
+
+// ================= FIREBASE CLOUD SYNC (TLCM POS PRO) =================
+const firebaseConfig = {
+  apiKey: "AIzaSyCv0vREJXcYbrbengjTyjTy5PZMymuxabs",
+  authDomain: "tlcm-pos-pro.firebaseapp.com",
+  projectId: "tlcm-pos-pro",
+  storageBucket: "tlcm-pos-pro.firebasestorage.app",
+  messagingSenderId: "15669355406",
+  appId: "1:15669355406:web:a652d89a94364216347adf",
+  measurementId: "G-V2B68D4HZC"
+};
+
+let fbAuth=null, fbDb=null, currentUser=null, unsubStore=null, isApplyingCloud=false;
+const clientSessionId = id();
+
+function setCloudUI(mode, text){
+ const pill=document.getElementById('cloudPill');
+ const label=document.getElementById('cloudPillText');
+ if(pill){
+  pill.classList.remove('online','syncing','error');
+  if(mode)pill.classList.add(mode);
+ }
+ if(label)label.textContent=text;
+}
+
+function renderSideAuth(){
+ const box=document.getElementById('sideAuthBox');
+ if(!box)return;
+ if(currentUser){
+  const photo=currentUser.photoURL?`<img src="${esc(currentUser.photoURL)}" alt="">`:'';
+  box.innerHTML=`
+   <div class="auth-card">
+    <div class="auth-user">
+     ${photo}
+     <div>
+      <b>${esc(currentUser.displayName||'Google Account')}</b>
+      <span>${esc(currentUser.email||'')}</span>
+     </div>
+    </div>
+    <button type="button" class="signout-btn" onclick="googleSignOut()">Sign Out</button>
+   </div>`;
+ }else{
+  box.innerHTML=`
+   <div class="auth-card">
+    <strong>☁ TLCM Cloud Sync</strong>
+    <p style="margin:0;font-size:11px;color:#b8c8df">Sign in with Google to sync all devices live.</p>
+    <button type="button" class="google-btn" onclick="googleSignIn()">
+     <svg width="15" height="15" viewBox="0 0 48 48"><path fill="#FFC107" d="M43.6 20.1H42V20H24v8h11.3C33.7 32.7 29.2 36 24 36c-6.6 0-12-5.4-12-12s5.4-12 12-12c3.1 0 5.8 1.2 8 3l5.7-5.7C34 6 29.3 4 24 4 12.9 4 4 12.9 4 24s8.9 20 20 20 20-8.9 20-20c0-1.3-.1-2.6-.4-3.9z"/><path fill="#FF3D00" d="M6.3 14.7l6.6 4.8C14.7 15.1 19 12 24 12c3.1 0 5.8 1.2 8 3l5.7-5.7C34 6 29.3 4 24 4 16.3 4 9.7 8.3 6.3 14.7z"/><path fill="#4CAF50" d="M24 44c5.2 0 9.9-2 13.4-5.2l-6.2-5.2C29.2 35.1 26.7 36 24 36c-5.2 0-9.6-3.3-11.3-7.9l-6.5 5C9.5 39.6 16.2 44 24 44z"/><path fill="#1976D2" d="M43.6 20.1H42V20H24v8h11.3c-.8 2.2-2.2 4.2-4.1 5.6l6.2 5.2C37 39.2 44 34 44 24c0-1.3-.1-2.6-.4-3.9z"/></svg>
+     Sign in with Google
+    </button>
+   </div>`;
+ }
+}
+
+function handleCloudPillClick(){
+ if(currentUser){
+  openModal('TLCM Cloud Sync',`
+   <p>Signed in as <b>${esc(currentUser.displayName||'User')}</b> (${esc(currentUser.email||'')})</p>
+   <p class="muted" style="font-size:12px">Your products, IMEI numbers, bills, customers, and EMI records are syncing in real time across all devices logged into this Google account.</p>
+   <div style="display:flex;gap:8px;margin-top:14px">
+    <button type="button" onclick="syncToCloud(true);closeModal()">Force Sync Now</button>
+    <button type="button" class="danger" onclick="googleSignOut();closeModal()">Sign Out</button>
+   </div>`);
+ }else{
+  googleSignIn();
+ }
+}
+
+async function googleSignIn(){
+ if(!fbAuth){toast('Firebase SDK not loaded. Check internet connection.');return}
+ if(location.protocol==='file:'){
+  toast('Host this file on Netlify Drop or Firebase Hosting to use Google Sign-In.');
+  return;
+ }
+ const provider=new firebase.auth.GoogleAuthProvider();
+ try{
+  setCloudUI('syncing','Signing in…');
+  await fbAuth.signInWithPopup(provider);
+ }catch(err){
+  if(err.code==='auth/popup-blocked'||err.code==='auth/operation-not-supported-in-this-environment'){
+   fbAuth.signInWithRedirect(provider);
+  }else{
+   setCloudUI('error','Sign-in failed');
+   toast('Sign-in error: '+(err.message||err.code));
+  }
+ }
+}
+
+async function googleSignOut(){
+ if(!fbAuth)return;
+ if(unsubStore){unsubStore();unsubStore=null;}
+ await fbAuth.signOut();
+ currentUser=null;
+ renderSideAuth();
+ setCloudUI('','Sign in');
+ toast('Signed out (local mode)');
+}
+
+async function syncToCloud(showToast=false){
+ if(!fbDb||!currentUser||isApplyingCloud)return;
+ try{
+  setCloudUI('syncing','Syncing…');
+  await fbDb.collection('stores').doc(currentUser.uid).set({
+   payload: JSON.stringify(state),
+   updatedAt: Date.now(),
+   updatedBy: clientSessionId,
+   email: currentUser.email||''
+  },{merge:true});
+  setCloudUI('online','Synced');
+  if(showToast)toast('Cloud sync completed');
+ }catch(err){
+  setCloudUI('error','Sync error');
+  if(showToast)toast('Cloud sync failed: '+(err.message||err.code));
+ }
+}
+
+function startCloudListener(user){
+ if(unsubStore){unsubStore();unsubStore=null;}
+ const ref=fbDb.collection('stores').doc(user.uid);
+ setCloudUI('syncing','Connecting…');
+ unsubStore=ref.onSnapshot(snap=>{
+  if(!snap.exists){
+   // First time login: push current local state to cloud
+   syncToCloud(false);
+   return;
+  }
+  const data=snap.data();
+  if(!data||!data.payload)return;
+  if(data.updatedBy===clientSessionId){
+   setCloudUI('online','Synced');
+   return;
+  }
+  try{
+   const parsed=JSON.parse(data.payload);
+   isApplyingCloud=true;
+   state={
+    products:Array.isArray(parsed.products)?parsed.products.map(p=>({imei:'',imei2:'',modelNo:'',serial:'',batteryNo:'',chargerNo:'',...p})):[],
+    categories:Array.isArray(parsed.categories)&&parsed.categories.length?parsed.categories:state.categories,
+    customers:Array.isArray(parsed.customers)?parsed.customers:[],
+    bills:Array.isArray(parsed.bills)?parsed.bills:[],
+    emi:Array.isArray(parsed.emi)?parsed.emi:[],
+    collections:Array.isArray(parsed.collections)?parsed.collections:[],
+    settings:{...defaultSettings,...(parsed.settings||{})}
+   };
+   safeSave(state);
+   refreshAll();
+   setCloudUI('online','Synced');
+  }catch(e){
+   console.error(e);
+  }finally{
+   isApplyingCloud=false;
+  }
+ }, err=>{
+  setCloudUI('error','Sync blocked');
+  toast('Firestore error: '+(err.message||err.code));
+ });
+}
+
+function initFirebase(){
+ try{
+  if(typeof firebase==='undefined')return;
+  if(!firebase.apps.length)firebase.initializeApp(firebaseConfig);
+  fbAuth=firebase.auth();
+  fbDb=firebase.firestore();
+  fbAuth.onAuthStateChanged(user=>{
+   currentUser=user||null;
+   renderSideAuth();
+   if(user){
+    startCloudListener(user);
+    toast('Signed in as '+(user.displayName||user.email));
+   }else{
+    if(unsubStore){unsubStore();unsubStore=null;}
+    setCloudUI('','Sign in');
+   }
+  });
+ }catch(err){
+  console.error('Firebase init error:',err);
+ }
+}
+
+// Initialize
+updateSettingsPreview();
+refreshAll();
+renderCart();
+initFirebase();
+</script>
+</body>
+</html>

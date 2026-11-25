@@ -1,0 +1,34 @@
+{
+  "name": "tlcm-pos-pro",
+  "version": "1.0.0",
+  "description": "TLCM POS PRO — Cloud Mobile Store Management",
+  "main": "main.js",
+  "scripts": {
+    "start": "electron .",
+    "build": "electron-builder --win"
+  },
+  "build": {
+    "appId": "com.tlcm.pospro",
+    "productName": "TLCM POS PRO",
+    "files": [
+      "main.js",
+      "index.html",
+      "package.json"
+    ],
+    "win": {
+      "target": [
+        {
+          "target": "portable",
+          "arch": ["x64"]
+        }
+      ]
+    },
+    "portable": {
+      "artifactName": "TLCM_POS_PRO_Windows.exe"
+    }
+  },
+  "devDependencies": {
+    "electron": "^31.0.0",
+    "electron-builder": "^24.13.3"
+  }
+}
